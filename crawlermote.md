@@ -62,12 +62,13 @@
 
 ### resquests.get
 
-
+---
 	import requests
 	#引入requests库
 	res = requests.get('URL')
 	#requests.get是在调用requests库中的get()方法，它向服务器发送了一个请求，括号里的参数是你需要的数据所在的网址，然后服务器对请求作出了响应。
 	#服务器返回的结果是个Response对象
+---
 
 ### Response对象的常用属性
 
@@ -89,7 +90,7 @@
 
 - 它能把Response对象的内容以二进制数据的形式返回，适用于图片、音频、视频的下载
 
-
+---
 	import requests
 	res = requests.get('https://res.pandateacher.com/2018-12-18-10-43-07.png')
 	#发出请求，并把返回的结果放在变量res中
@@ -102,12 +103,13 @@
 	#获取pic的二进制内容
 	photo.close()
 	#关闭文件
+---
 
 #### response.text
 
 - 这个属性可以把Response对象的内容以字符串的形式返回，适用于文字、网页源代码的下载。
 
-
+---
 	import requests
 	#引用requests库
 	res = requests.get('https://localprod.pandateacher.com/python-manuscript/crawler-html/sanguo.md')
@@ -126,16 +128,22 @@
 	#写进文件中     
 	k.close()
 	#关闭文档
+---
 
 #### res.encoding
 - 它能定义Response对象的编码类型。
 
-
+---
 	在真实的情况中，我们该在什么时候用res.encoding呢？
 
-	首先，目标数据本身是什么编码是未知的。用requests.get()发送请求后，我们会取得一个Response对象，其中，requests库会对数据的编码类型做出自己的判断。但是！这个判断有可能准确，也可能不准确。
+	首先，目标数据本身是什么编码是未知的。用requests.get()发送请求后，
+	我们会取得一个Response对象，其中，requests库会对数据的编码类型做出自己的判断。
+	但是！这个判断有可能准确，也可能不准确。
 
-	如果它判断准确的话，我们打印出来的response.text的内容就是正常的、没有乱码的，那就用不到res.encoding；如果判断不准确，就会出现一堆乱码，那我们就可以去查看目标数据的编码，然后再用res.encoding把编码定义成和目标数据一致的类型即可。
+	如果它判断准确的话，我们打印出来的response.text的内容就是正常的、没有乱码的，
+	那就用不到res.encoding；如果判断不准确，就会出现一堆乱码，
+	那我们就可以去查看目标数据的编码，然后再用res.encoding把编码定义成和目标数据一致的类型即可。
+
 
 #### requests总结
 
@@ -151,7 +159,7 @@
 - [淘宝的robots协议](http://www.taobao.com/robots.txt)
 - http://www.taobao.com/robots.txt
 
-
+---
 	User-agent:  Baiduspider #百度爬虫
 	Allow:  /article #允许访问 /article.htm
 	Allow:  /oshtml #允许访问 /oshtml.htm
@@ -176,7 +184,7 @@
 	​
 	User-Agent:  * #其他爬虫
 	Disallow:  / #禁止访问所有页面
-
+---
 
 - Allow代表可以被访问，Disallow代表禁止被访问。
 - 而且有趣的是，淘宝限制了百度对产品页面的爬虫，却允许谷歌访问。
