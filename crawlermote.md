@@ -341,6 +341,7 @@
 	前者是字符串，后者是已经被解析过的BeautifulSoup对象。
 	之所以打印出来的是一样的文本，是因为BeautifulSoup对象在直接打印它的时候会调用该对象内的str方法，所以直接打印 bs 对象显示字符串是str的返回结果
 
+---
 
 ### 提取数据
 
@@ -418,16 +419,190 @@
 ![](crawlermote_files/25.jpg)
 
 
+# 下厨房项目
+
+- 先提取每个菜的全部信息，然后写循环，一个一个信息提取
+---
+	import requests
+	from bs4 import BeautifulSoup
+	
+
+	res_foods = requests.get('http://www.xiachufang.com/explore/') # 获取数据
+	
+	bs_foods = BeautifulSoup(res_foods.text,'html.parser') # 解析数据
+	list_foods = bs_foods.find_all('div',class_='info pure-u') # 查找最小父级标签
+
+	list_all = [] # 创建一个空列表，用于存储信息
+
+	for food in list_foods:
+
+		tag_a = food.find('a') # 提取第0个父级标签中的<a>标签
+		name = tag_a.text[17:-13] # 菜名，使用[17:-13]切掉了多余的信息
+		URL = 'http://www.xiachufang.com'+tag_a['href'] # 获取URL
+		tag_p = food.find('p',class_='ing ellipsis') # 提取第0个父级标签中的<p>标签
+		ingredients = tag_p.text[1:-1] # 食材，使用[1:-1]切掉了多余的信息
+		list_all.append([name,URL,ingredients]) # 将菜名、URL、食材，封装为列表，添加进list_all
+
+	print(list_all) # 打印
+	
+---	
+
+- 分别提取所有的菜名、所有的URL、所有的食材。然后让菜名、URL、食材给一一对应起来。
+
+---
+	import requests # 引用requests库
+	from bs4 import BeautifulSoup # 引用BeautifulSoup库
+
+	res_foods = requests.get('http://www.xiachufang.com/explore/') # 获取数据
+	bs_foods = BeautifulSoup(res_foods.text,'html.parser') # 解析数据
+
+	tag_name = bs_foods.find_all('p',class_='name') # 查找包含菜名和URL的<p>标签
+	tag_ingredients = bs_foods.find_all('p',class_='ing ellipsis') # 查找包含食材的<p>标签
+	list_all = [] # 创建一个空列表，用于存储信息
+	for x in range(len(tag_name)): # 启动一个循环，次数等于菜名的数量
+		list_food = [tag_name[x].text[18:-14],tag_name[x].find('a')['href'],tag_ingredients[x].text[1:-1]] 
+		提取信息，封装为列表。注意此处[18:-14]切片和之前不同，是因为此处使用的是<p>标签，而之前是<a>
+		list_all.append(list_food) # 将信息添加进list_all
+	print(list_all # 打印
+
+---
+
+# 歌单项目
+
+- 网页源代码里没有我们想要的数据,怎么解决？
+
+## Network
+
+- Network的功能是：记录在当前页面上发生的所有请求。
+
+![](crawlermote_files/26.jpg)
+
+- [周杰伦歌单](https://y.qq.com/portal/search.html#page=1&searchid=1&remoteplace=txt.yqq.top&t=song&w=%E5%91%A8%E6%9D%B0%E4%BC%A6)  
+
+	在图最下面，它告诉我们：此处共有52个请求，36.9kb的流量，耗时2.73s完成。
+这个，正是我们的浏览器每时每刻工作的真相：它总是在向服务器，发起各式各样的请求。当这些请求完成，它们会一起组成我们在Elements中看到的网页源代码。
+	为什么我们刚才没办法拿到歌曲清单呢？答，这是因为我们刚刚写的代码，只是模拟了这52个请求中的一个（准确来说，就是第0个请求），而这个请求里并不包含歌曲清单。
+
+- 找到这个页面的第0个请求：search.html
+- 查看它的Response（官方翻译叫“响应”，你可以理解为服务器对浏览器这个请求的回应内容，即请求的结果）
+- 它就是我们刚刚用requests.get()获取到的网页源代码，它里面不包含歌曲清单。
 
 
+	一般来说，都是这种第0个请求先启动了，其他的请求才会关联启动，一点点地将网页给填充起来。做一个比喻，第0个请求就好比是人的骨架，确定了这个网页的结构。在此之后，众多的请求接连涌入，作为人的血脉经络。
+也有一些网页，直接把所有的关键信息都放在第0个请求里，尤其是一些比较老（或比较轻量）的网站，我们用requests和BeautifulSoup就能解决它们。
 
 
+#### Network用法
+
+![](crawlermote_files/27.jpg)
 
 
+	第0行的左侧，红色的圆钮是启用Network监控（默认高亮打开），灰色圆圈是清空面板上的信息。右侧勾选框Preserve log，它的作用是“保留请求日志”。如果不点击这个，当发生页面跳转的时候，记录就会被清空。所以，我们在爬取一些会发生跳转的网页时，会点亮它。
+	第1行，是对请求进行分类查看。我们最常用的是：ALL（查看全部）/XHR（仅查看XHR，我们等会重点讲它）/Doc（Document，第0个请求一般在这里），有时候也会看看：Img（仅查看图片）/Media（仅查看媒体文件）/Other（其他）。最后，JS和CSS，则是前端代码，负责发起请求和页面实现；Font是文字的字体；而理解WS和Manifest，需要网络编程的知识
+
+![](crawlermote_files/28.jpg)
+
+夹在第2行和第1行中间的，是一个时间轴。记录什么时间，有哪些请求。而第2行，就是各个请求
+
+![](crawlermote_files/29.jpg)
+
+#### XHR
+
+Network中，有一类非常重要的请求叫做XHR（当你把鼠标在XHR上悬停，你可以看到它的完整表述是XHR and Fetch）
+
+我们平时使用浏览器上网的时候，经常有这样的情况：浏览器上方，它所访问的网址没变，但是网页里却新加了内容。
+
+典型代表：如购物网站，下滑自动加载出更多商品。在线翻译网站，输入中文实时变英文。比如，你正在使用的教学系统，每点击一次Enter就有新的内容弹出。
+
+这个，叫做Ajax技术（技术本身和爬虫关系不大，在此不做展开，你可以通过搜索了解）。应用这种技术，好处是显而易见的——更新网页内容，而不用重新加载整个网页。又省流量又省时间的。
+
+如今，比较新潮的网站都在使用这种技术来实现数据传输。只剩下一些特别老，或是特别轻量的网站，还在用老办法——加载新的内容，必须要跳转一个新网址。
+
+这种技术在工作的时候，会创建一个XHR（或是Fetch）对象，然后利用XHR对象来实现，服务器和浏览器之间传输数据。在这里，XHR和Fetch并没有本质区别，只是Fetch出现得比XHR更晚一些，所以对一些开发人员来说会更好用，但作用都是一样的。
 
 
+- 我们的歌曲清单不在网页源代码里，而且也不是图片，不是媒体文件，自然只会是在XHR里
+- 点击查看XHR
+
+![](crawlermote_files/30.jpg)
+
+从左往右分别是：Headers：标头（请求信息）、Preview：预览、Response：原始信息、Timing：时间。
+
+- 点击Preview，你能在里面发现我们想要的信息：歌名就藏在里面！
+- 那如何把这些歌曲名拿到呢？这就需要我们去看看最左侧的Headers
+
+![](crawlermote_files/31.jpg)
+
+![](crawlermote_files/32.jpg)
+
+- General里的Requests URL就是我们应该去访问的链接
 
 
+	import requests # 引用requests库
+	res = requests.get('https://c.y.qq.com/soso/fcgi-bin/client_search_cp?ct=24&qqmusic_ver=1298&new_json=1&remoteplace=txt.yqq.song&searchid=60997426243444153&t=0&aggr=1&cr=1&catZhida=1&lossless=0&flag_qc=0&p=1&n=20&w=%E5%91%A8%E6%9D%B0%E4%BC%A6&g_tk=5381&loginUin=0&hostUin=0&format=json&inCharset=utf8&outCharset=utf-8&notice=0&platform=yqq.json&needNewCode=0')
+	调用get方法，下载这个字典
+	print(res.text)
+	把它打印出来
+	
+	
+- 使用res.text取到的，是字符串。它不是我们想要的列表/字典，数据取不出来。
+
+#### json
+
+- 在Python语言当中，json是一种特殊的字符串，这种字符串特殊在它的写法——它是用列表/字典的语法写成的
+
+
+	a = '1,2,3,4'
+	 这是字符串
+	b = [1,2,3,4]
+	 这是列表
+	c = '[1,2,3,4]'
+	 这是字符串，但它是用json格式写的字符串
+
+- 组织数据的方式也有规律，规律有三条：
+
+![](crawlermote_files/33.jpg)
+
+
+json则是另一种组织数据的格式，长得和Python中的列表/字典非常相像。它和html一样，常用来做网络数据传输。刚刚我们在XHR里查看到的列表/字典，严格来说其实它不是列表/字典，它是json。
+
+![](crawlermote_files/34.jpg)
+
+为什么要把它表示成字符串？答案很简单，因为不是所有的编程语言都能读懂Python里的数据类型（如，列表/字符串），但是所有的编程语言，都支持文本（比如在Python中，用字符串这种数据类型来表示文本）这种最朴素的数据类型。
+
+如此，json数据才能实现，跨平台，跨语言工作。
+
+而json和XHR之间的关系：XHR用于传输数据，它能传输很多种数据，json是被传输的一种数据格式。
+
+我们总是可以将json格式的数据，转换成正常的列表/字典，也可以将列表/字典，转换成json。
+
+#### 解析json
+
+- 查看requests库处理json数据的方法
+
+![](crawlermote_files/35.jpg)
+
+---
+	import requests
+	 引用requests库
+	res_music = requests.get('https://c.y.qq.com/soso/fcgi-bin/client_search_cp?ct=24&qqmusic_ver=1298&new_json=1&remoteplace=txt.yqq.song&searchid=60997426243444153&t=0&aggr=1&cr=1&catZhida=1&lossless=0&flag_qc=0&p=1&n=20&w=%E5%91%A8%E6%9D%B0%E4%BC%A6&g_tk=5381&loginUin=0&hostUin=0&format=json&inCharset=utf8&outCharset=utf-8&notice=0&platform=yqq.json&needNewCode=0')
+	 调用get方法，下载这个字典
+	json_music = res_music.json()
+	 使用json()方法，将response对象，转为列表/字典
+	list_music = json_music['data']['song']['list']
+	 一层一层地取字典，获取歌单列表
+	for music in list_music:
+	 list_music是一个列表，music是它里面的元素
+		print(music['name'])
+		 以name为键，查找歌曲名
+		print('所属专辑：'+music['album']['name'])
+		 查找专辑名
+		print('播放时长：'+str(music['interval'])+'秒')
+		 查找播放时长
+		print('播放链接：https://y.qq.com/n/yqq/song/'+music['mid']+'.html\n\n')
+		 查找播放链接
+
+---
 
 
 
