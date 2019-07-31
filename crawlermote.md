@@ -604,6 +604,259 @@ json则是另一种组织数据的格式，长得和Python中的列表/字典非
 
 ---
 
+# 歌曲评论项目
+
+## 利用XHR找数据
+
+- 学会如何判断我们想要的信息是在Html，还是在XHR里：
+![](crawlermote_files/36.jpg)
+
+## 带参数请求数据
+
+读懂参数，有两个重要的方法是“观察”和“比较”。
+“观察”指的是阅读参数的键与值，尝试理解它的含义。“比较”指的是比较两个相近的XHR——它们有哪些不同，对应的页面显示内容有什么不同。
+
+---
+	import requests
+	 引用requests模块
+	for i in range(5):
+		res_comments = requests.get('https://c.y.qq.com/base/fcgi-bin/fcg_global_comment_h5.fcg?g_tk=5381&loginUin=0&hostUin=0&format=json&inCharset=utf8&outCharset=GB2312&notice=0&platform=yqq.json&needNewCode=0&cid=205360772&reqtype=2&biztype=1&topid=102065756&cmd=6&needmusiccrit=0&pagenum='+str(i)+'&pagesize=15&lasthotcommentid=song_102065756_3202544866_44059185&domain=qq.com&ct=24&cv=10101010')
+		 调用get方法，下载评论列表
+		json_comments = res_comments.json()
+		 使用json()方法，将response对象，转为列表/字典
+		list_comments = json_comments['comment']['commentlist']
+		 一层一层地取字典，获取评论列表
+		for comment in list_comments:
+		 list_comments是一个列表，comment是它里面的元素
+			print(comment['rootcommentcontent'])
+			 输出评论
+			print('-----------------------------------')
+			 将不同的评论分隔开来
+
+
+---
+
+![](crawlermote_files/37.jpg)
+
+我们来让这个代码变好看些。事实上，requests模块里的requests.get()提供了一个参数叫params，可以让我们用字典的形式，把参数传进去。
+
+![](crawlermote_files/38.jpg)
+
+所以，其实我们可以把Query String Parametres里的内容，直接复制下来，封装为一个字典，传递给params。只是有一点要特别注意：要给他们打引号，让它们变字符串。
+
+---
+	import requests
+	 引用requests模块
+	url = 'https://c.y.qq.com/base/fcgi-bin/fcg_global_comment_h5.fcg'
+	 请求歌曲评论的url参数的前面部分
+
+	for i in range(5):
+		params = {
+		'g_tk':'5381',
+		'loginUin':'0', 
+		'hostUin':'0',
+		'format':'json',
+		'inCharset':'utf8',
+		'outCharset':'GB2312',
+		'notice':'0',
+		'platform':'yqq.json',
+		'needNewCode':'0',
+		'cid':'205360772',
+		'reqtype':'2',
+		'biztype':'1',
+		'topid':'102065756',
+		'cmd':'6',
+		'needmusiccrit':'0',
+		'pagenum':str(i),
+		'pagesize':'15',
+		'lasthotcommentid':'song_102065756_3202544866_44059185',
+		'domain':'qq.com',
+		'ct':'24',
+		'cv':'10101010'   
+		}
+		 将参数封装为字典
+		res_comments = requests.get(url,params=params)
+		 调用get方法，下载这个字典
+		json_comments = res_comments.json()
+		list_comments = json_comments['comment']['commentlist']
+		for comment in list_comments:
+			print(comment['rootcommentcontent'])
+			print('-----------------------------------')
+
+---
+
+## Request Headers
+- 服务器怎么判断访问者是一个普通的用户（通过浏览器），还是一个爬虫者（通过代码）
+
+![](crawlermote_files/39.jpg)
+
+Requests Headers，我们把它称作请求头。它里面会有一些关于该请求的基本信息，比如：这个请求是从什么设备什么浏览器上发出？这个请求是从哪个页面跳转而来？
+user-agent（中文：用户代理）会记录你电脑的信息和浏览器版本（如我的，就是windows10的64位操作系统，使用谷歌浏览器）
+origin（中文：源头）和referer（中文：引用来源）则记录了这个请求，最初的起源是来自哪个页面。它们的区别是referer会比origin携带的信息更多些。
+如果我们想告知服务器，我们不是爬虫是一个正常的浏览器，就要去修改user-agent。倘若不修改，那么这里的默认值就会是Python，会被浏览器认出来。
+
+
+### 添加Requests Headers
+
+![](crawlermote_files/40.jpg)
+
+---
+	import requests
+	url = 'https://c.y.qq.com/soso/fcgi-bin/client_search_cp'
+
+	headers = {
+		'origin':'https://y.qq.com',
+		 请求来源，本案例中其实是不需要加这个参数的，只是为了演示
+		'referer':'https://y.qq.com/n/yqq/song/004Z8Ihr0JIu5s.html',
+		 请求来源，携带的信息比“origin”更丰富，本案例中其实是不需要加这个参数的，只是为了演示
+		'user-agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36',
+		 标记了请求从什么设备，什么浏览器上发出
+		}
+	 伪装请求头
+
+	params = {
+	'ct':'24',
+	'qqmusic_ver': '1298',
+	'new_json':'1',
+	'remoteplace':'sizer.yqq.song_next',
+	'searchid':'64405487069162918',
+	't':'0',
+	'aggr':'1',
+	'cr':'1',
+	'catZhida':'1',
+	'lossless':'0',
+	'flag_qc':'0',
+	'p':1,
+	'n':'20',
+	'w':'周杰伦',
+	'g_tk':'5381',
+	'loginUin':'0',
+	'hostUin':'0',
+	'format':'json',
+	'inCharset':'utf8',
+	'outCharset':'utf-8',
+	'notice':'0',
+	'platform':'yqq.json',
+	'needNewCode':'0'    
+	}
+	 将参数封装为字典
+	res_music = requests.get(url,headers=headers,params=params)
+	 发起请求，填入请求头和参数
+
+---
+
+一个url由两部分组成，?（有时候是“#”）之前是我们请求的地址，?之后是我们的请求所附带的参数。通常，我们会把参数封装成一个字典，添加进请求中去。
+
+
+# 数据存储
+
+## 存储数据的方式
+- 常用的存储数据的方式有两种——存储成csv格式文件、存储成Excel文件
+
+csv是一种字符串文件的格式，它组织数据的语法就是在字符串之间加分隔符——行与行之间是加换行符，同列之间是加逗号分隔。
+
+它可以用任意的文本编辑器打开（如记事本），也可以用Excel打开，还可以通过Excel把文件另存为csv格式（因为Excel支持csv格式文件）。
+
+## 存储数据的基础知识
+
+![](crawlermote_files/41.jpg)
+
+- 操作csv文件我们需要借助csv模块；操作Excel文件则需要借助openpyxl模块。
+
+### csv写入与读取
+
+
+	import csv
+	引用csv模块。
+	csv_file = open('demo.csv','w',newline='',encoding='utf-8')
+	创建csv文件，我们要先调用open()函数，传入参数：文件名“demo.csv”、写入模式“w”、newline=''、encoding='utf-8'。
+
+
+![](crawlermote_files/42.jpg)
+
+加newline=' '参数的原因是，可以避免csv文件出现两倍的行距（就是能避免表格的行与行之间出现空白行）。加encoding='utf-8'，可以避免编码问题导致的报错或乱码。
+
+
+创建完csv文件后，我们要借助csv.writer()函数来建立一个writer对象。
+用writer对象的writerow()方法，往csv文件里写入新的内容。
+writerow()函数里，需要放入列表参数，所以我们得把要写入的内容写成列表。就像['电影','豆瓣评分']。
+
+---
+	import csv
+	引用csv模块。
+	csv_file = open('demo.csv','w',newline='',encoding='utf-8')
+	调用open()函数打开csv文件，传入参数：文件名“demo.csv”、写入模式“w”、newline=''、encoding='utf-8'。
+	writer = csv.writer(csv_file)
+	 用csv.writer()函数创建一个writer对象。
+	writer.writerow(['电影','豆瓣评分'])
+	调用writer对象的writerow()方法，可以在csv文件里写入一行文字 “电影”和“豆瓣评分”。
+	writer.writerow(['银河护卫队','8.0'])
+	在csv文件里写入一行文字 “银河护卫队”和“8.0”。
+	writer.writerow(['复仇者联盟','8.1'])
+	在csv文件里写入一行文字 “复仇者联盟”和“8.1”。
+	csv_file.close()
+	写入完成后，关闭文件就大功告成啦！
+---
+
+- [csv模块官方文档链接](https://yiyibooks.cn/xx/python_352/library/csv.html#module-csv)
+
+
+### Excel写入与读取
+
+![](crawlermote_files/43.jpg)
+
+一个Excel文档也称为一个工作薄（workbook），每个工作薄里可以有多个工作表（wordsheet），当前打开的工作表又叫活动表。
+
+---
+	import openpyxl 
+	引用openpyxl。
+	wb = openpyxl.Workbook()
+	利用openpyxl.Workbook()函数创建新的workbook（工作薄）对象，就是创建新的空的Excel文件。
+	
+	创建完新的工作薄后，还得获取工作表。不然程序会懵逼，不知道要把内容写入哪张工作表里。
+	sheet = wb.active
+	wb.active
+	就是获取这个工作薄的活动表，通常就是第一个工作表。
+	sheet.title = 'new title'
+	可以用.title给工作表重命名。现在第一个工作表的名称就会由原来默认的“sheet1”改为"new title"。
+
+	添加完工作表，我们就能来操作单元格，往单元格里写入内容。
+	heet['A1'] = '漫威宇宙' 
+	把'漫威宇宙'赋值给第一个工作表的A1单元格，就是往A1的单元格中写入了'漫威宇宙'。
+
+	往工作表里写入一行内容的话，就得用到append函数
+	row = ['美国队长','钢铁侠','蜘蛛侠']
+	把我们想写入的一行内容写成列表，赋值给row。
+	sheet.append(row)
+	用sheet.append()就能往表格里添加这一行文字。
+
+	wb.save('Marvel.xlsx')
+	保存新建的Excel文件，并命名为“Marvel.xlsx”
+	
+	读取的代码：
+	wb = openpyxl.load_workbook('Marvel.xlsx')
+	sheet = wb['new title']
+	sheetname = wb.sheetnames
+	print(sheetname)
+	A1_cell = sheet['A1']
+	A1_value = A1_cell.value
+	print(A1_value)
+---
+
+- [openpyxl模块的官方文档](https://openpyxl.readthedocs.io/en/stable/)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
