@@ -846,6 +846,448 @@ writerow()函数里，需要放入列表参数，所以我们得把要写入的�
 - [openpyxl模块的官方文档](https://openpyxl.readthedocs.io/en/stable/)
 
 
+# 爬取知乎大v张佳玮的文章
+
+## 复习
+
+![](crawlermote_files/44.jpg)
+
+从Response对象开始，我们就分成了两条路径，一条路径是数据放在HTML里，所以我们用BeautifulSoup库去解析数据和提取数据；另一条，数据作为Json存储起来，所以我们用response.json()方法去解析，然后提取、存储数据。
+
+---
+	import requests
+	import csv
+	引用csv。
+	csv_file=open('articles.csv','w',newline='',encoding='utf-8')
+	调用open()函数打开csv文件，传入参数：文件名“articles.csv”、写入模式“w”、newline=''。
+	writer = csv.writer(csv_file)
+	 用csv.writer()函数创建一个writer对象。
+	list2=['标题','链接','摘要']
+	创建一个列表
+	writer.writerow(list2)
+	调用writer对象的writerow()方法，可以在csv文件里写入一行文字 “标题”和“链接”和"摘要"。
+	
+	headers={'user-agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'}
+	url='https://www.zhihu.com/api/v4/members/zhang-jia-wei/articles?'
+	articlelist=[]
+	建立一个空列表，以待写入数据
+	offset=0
+	设置offset的起始值为0
+	
+	while True:
+		params={
+			'include':'data[*].comment_count,suggest_edit,is_normal,thumbnail_extra_info,thumbnail,can_comment,comment_permission,admin_closed_comment,content,voteup_count,created,updated,upvoted_followees,voting,review_info,is_labeled,label_info;data[*].author.badge[?(type=best_answerer)].topics',
+			'offset':str(offset),
+			'limit':'20',
+			'sort_by':'voteups',
+			}
+		封装参数
+		res=requests.get(url,headers=headers,params=params)
+		发送请求，并把响应内容赋值到变量res里面
+		articles=res.json()
+		 print(articles)
+		data=articles['data']
+		定位数据
+		for i in data:
+			list1=[i['title'],i['url'],i['excerpt']]
+			#把数据封装成列表
+			articlelist.append(list1)
+			writer.writerow(list1)
+        调用writerow()方法，把列表list1的内容写入
+		offset=offset+20
+		在while循环内部，offset的值每次增加20
+		if offset>40:
+			break
+		如果offset大于40，即爬了两页，就停止
+		if articles['paging']['is_end'] == True:
+		如果键is_end所对应的值是True，就结束while循环。
+			break
+	print(articlelist)
+	打印看看
+	
+	csv_file.close()
+	写入完成后，关闭文件就大功告成
+---
+
+
+# cookies
+
+## post请求
+
+- [蜘蛛侠网站](https://wordpress-edu-3autumn.localprod.forc.work/wp-login.php)
+- 账号：spiderman，密码：crawler334566
+
+![](crawlermote_files/45.jpg)
+
+上图左边是“正常人”的操作：填上账号和密码；右边我们可以用工程师的思维，来分析浏览器的登录请求是怎么发送的。你需要做的是：先正常操作——填写完账号密码（别点击登录），再用工程师的做法操作：右击打开“检查”工具，点击【network】，勾选【preserve log】（持续显示请求记录，防止请求记录被刷新）。
+
+展开第0个请求【wp-login.php】，浏览一下【headers】。在【General】键里，我们可以先只看前两个参数【Request URL】（请求网址）和【Request Method】（请求方式）。
+
+![](crawlermote_files/46.jpg)
+
+这里的请求方式是post，而不是我们之前学过的get。
+
+## post与get区别
+
+- 其实，post和get都可以带着参数请求，不过get请求的参数会在url上显示出来。
+
+但post请求的参数就不会直接显示，而是隐藏起来。像账号密码这种私密的信息，就应该用post的请求。如果用get请求的话，账号密码全部会显示在网址上，这显然不科学！你可以这么理解，get是明文显示，post是非明文显示。
+
+
+通常，get请求会应用于获取网页数据，比如我们之前学的requests.get()。post请求则应用于向网页提交数据，比如提交表单类型数据（像账号密码就是网页表单的数据）。
+
+get和post是两种最常用的请求方式，除此之外，还有其他类型的请求方式，如head、options等
+
+![](crawlermote_files/47.jpg)
+
+【requests headers】存储的是浏览器的请求信息，【response headers】存储的是服务器的响应信息。我们这一关要找的cookies就在其中。
+
+你会看到在【response headers】里有set cookies的参数。set cookies是什么意思？就是服务器往浏览器写入了cookies。
+
+
+## cookies及其用法
+
+
+![](crawlermote_files/48.jpg)
+
+当你登录博客账号spiderman，并勾选“记住我”，服务器就会生成一个cookies和spiderman这个账号绑定。接着，它把这个cookies告诉你的浏览器，让浏览器把cookies存储到你的本地电脑。当下一次，浏览器带着cookies访问博客，服务器会知道你是spiderman，你不需要再重复输入账号密码，即可直接访问。
+
+当然，cookies也是有时效性的，过期后就会失效。你应该有过这样的体验：哪怕勾选了“记住我”，但一段时间过去了，网站还是会提示你要重新登录，就是之前的cookies已经失效。
+
+
+---
+	import requests
+	引入requests。
+	url = ' https://wordpress-edu-3autumn.localprod.forc.work/wp-login.php'
+	把请求登录的网址赋值给url。
+	headers = {
+	'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36'
+	}
+	加请求头，前面有说过加请求头是为了模拟浏览器正常的访问，避免被反爬虫。
+	data = {
+	'log': 'spiderman',  #写入账户
+	'pwd': 'crawler334566',  #写入密码
+	'wp-submit': '登录',
+	'redirect_to': 'https://wordpress-edu-3autumn.localprod.forc.work/wp-admin/',
+	'testcookie': '1'
+	}
+	把有关登录的参数封装成字典，赋值给data。
+	login_in = requests.post(url,headers=headers,data=data)
+	用requests.post发起请求，放入参数：请求登录的网址、请求头和登录参数，然后赋值给login_in。
+	cookies = login_in.cookies
+	提取cookies的方法：调用requests对象（login_in）的cookies属性获得登录的cookies，并赋值给变量cookies。
+
+	url_1 = 'https://wordpress-edu-3autumn.localprod.forc.work/wp-comments-post.php'
+	我们想要评论的文章网址。
+	data_1 = {
+	'comment': input('请输入你想要发表的评论：'),
+	'submit': '发表评论',
+	'comment_post_ID': '13',
+	'comment_parent': '0'
+	}
+	把有关评论的参数封装成字典。
+	comment = requests.post(url_1,headers=headers,data=data_1,cookies=cookies)
+	用requests.post发起发表评论的请求，放入参数：文章网址、headers、评论参数、cookies参数，赋值给comment。
+	调用cookies的方法就是在post请求中传入cookies=cookies的参数。
+	print(comment.status_code)
+	打印出comment的状态码，若状态码等于200，则证明我们评论成功。
+
+---
+
+
+![](crawlermote_files/49.jpg)
+
+
+## session及其用法
+
+所谓的会话，你可以理解成我们用浏览器上网，到关闭浏览器的这一过程。session是会话过程中，服务器用来记录特定用户会话的信息。
+
+比如你打开浏览器逛购物网页的整个过程中，浏览了哪些商品，在购物车里放了多少件物品，这些记录都会被服务器保存在session中。
+
+- session和cookies的关系还非常密切——cookies中存储着session的编码信息，session中又存储了cookies的信息。
+
+当浏览器第一次访问购物网页时，服务器会返回set cookies的字段给浏览器，而浏览器会把cookies保存到本地。
+
+等浏览器第二次访问这个购物网页时，就会带着cookies去请求，而因为cookies里带有会话的编码信息，服务器立马就能辨认出这个用户，同时返回和这个用户相关的特定编码的session。
+
+这也是为什么你每次重新登录购物网站后，你之前在购物车放入的商品并不会消失的原因。因为你在登录时，服务器可以通过浏览器携带的cookies，找到保存了你购物车信息的session。
+
+---
+	- 创建session来处理cookies。
+
+	![](crawlermote_files/50.jpg)
+
+	---
+	import requests
+	引用requests。
+	session = requests.session()
+	用requests.session()创建session对象，相当于创建了一个特定的会话，帮我们自动保持了cookies。
+	url = 'https://wordpress-edu-3autumn.localprod.forc.work/wp-login.php'
+	headers = {
+	'User-Agent':'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'
+	}
+	data = {
+		'log':input('请输入账号：'), #用input函数填写账号和密码，这样代码更优雅，而不是直接把账号密码填上去。
+		'pwd':input('请输入密码：'),
+		'wp-submit':'登录',
+		'redirect_to':'https://wordpress-edu-3autumn.localprod.forc.work/wp-admin/',
+		'testcookie':'1'
+	}
+	session.post(url,headers=headers,data=data)
+	在创建的session下用post发起登录请求，放入参数：请求登录的网址、请求头和登录参数。
+
+	url_1 = 'https://wordpress-edu-3autumn.localprod.forc.work/wp-comments-post.php'
+	把我们想要评论的文章网址赋值给url_1。
+	data_1 = {
+	'comment': input('请输入你想要发表的评论：'),
+	'submit': '发表评论',
+	'comment_post_ID': '13',
+	'comment_parent': '0'
+	}
+	把有关评论的参数封装成字典。
+	comment = session.post(url_1,headers=headers,data=data_1)
+	在创建的session下用post发起评论请求，放入参数：文章网址，请求头和评论参数，并赋值给comment。
+	print(comment)
+打印comment
+
+---
+
+## 存储cookies
+
+cookies能帮我们保存登录的状态，那我们就在第一次登录时把cookies存储下来，等下次登录再把存储的cookies读取出来，这样就不用重复输入账号密码了。
+
+---
+	import requests
+	session = requests.session()
+	url = 'https://wordpress-edu-3autumn.localprod.forc.work/wp-login.php'
+	headers = {
+	'User-Agent':'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'
+	}
+	data = {
+		'log':input('请输入账号：'),
+		'pwd':input('请输入密码：'),
+		'wp-submit':'登录',
+		'redirect_to':'https://wordpress-edu-3autumn.localprod.forc.work/wp-admin/',
+		'testcookie':'1'
+	}
+	session.post(url,headers=headers,data=data)
+	print(type(session.cookies))
+	打印cookies的类型,session.cookies就是登录的cookies
+	print(session.cookies)
+	打印cookies
+---
+
+RequestsCookieJar是cookies对象的类，cookies本身的内容有点像一个列表，里面又有点像字典的键与值
+
+json模块能把字典转成字符串。我们或许可以先把cookies转成字典，然后再通过json模块转成字符串。这样，就能用open函数把cookies存储成txt文件。
+
+![](crawlermote_files/51.jpg)
+
+![](crawlermote_files/52.jpg)
+
+- 把cookies存储成txt文件的代码如下
+
+---
+	import requests,json
+	引入requests和json模块。
+	session = requests.session()   
+	url = ' https://wordpress-edu-3autumn.localprod.forc.work/wp-login.php'
+	headers = {
+	'User-Agent':'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'
+	}
+	data = {
+	'log': input('请输入你的账号:'),
+	'pwd': input('请输入你的密码:'),
+	'wp-submit': '登录',
+	'redirect_to': 'https://wordpress-edu-3autumn.localprod.forc.work/wp-admin/',
+	'testcookie': '1'
+	}
+	session.post(url, headers=headers, data=data)
+
+	cookies_dict = requests.utils.dict_from_cookiejar(session.cookies)
+	把cookies转化成字典。
+	print(cookies_dict)
+	打印cookies_dict
+	cookies_str = json.dumps(cookies_dict)
+	调用json模块的dumps函数，把cookies从字典再转成字符串。
+	print(cookies_str)
+	打印cookies_str
+	f = open('cookies.txt', 'w')
+	创建名为cookies.txt的文件，以写入模式写入内容。
+	f.write(cookies_str)
+	把已经转成字符串的cookies写入文件。
+	f.close()
+	关闭文件。
+---
+
+- ookies的存储我们搞定了，但还得搞定cookies的读取，才能解决每次发表评论都得先输入账号密码的问题。
+
+## 读取cookies
+
+- 存储cookies时，是把它先转成字典，再转成字符串。读取cookies则刚好相反，要先把字符串转成字典，再把字典转成cookies本来的格式。
+
+![](crawlermote_files/53.jpg)
+
+- 读取cookies的代码如下：
+
+---
+	cookies_txt = open('cookies.txt', 'r')
+	以reader读取模式，打开名为cookies.txt的文件。
+	cookies_dict = json.loads(cookies_txt.read())
+	调用json模块的loads函数，把字符串转成字典。
+	cookies = requests.utils.cookiejar_from_dict(cookies_dict)
+	把转成字典的cookies再转成cookies本来的格式。
+	session.cookies = cookies
+	获取cookies：就是调用requests对象（session）的cookies属性。
+---
+
+
+解决了每一次都要重复输入账号密码的问题，但这个代码还存在一个缺陷——并没有解决cookies会过期的问题。
+
+icon
+cookies是否过期，我们可以通过最后的状态码是否等于200来判断。但更好的解决方法应该在代码里加一个条件判断，如果cookies过期，就重新获取新的cookies。
+
+- 更完整以及面向对象的代码应该是下面这样的：
+
+---
+	import requests, json
+	session = requests.session()
+	headers = {
+		'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36'}
+
+	def cookies_read():
+		cookies_txt = open('cookies.txt', 'r')
+		cookies_dict = json.loads(cookies_txt.read())
+		cookies = requests.utils.cookiejar_from_dict(cookies_dict)
+		return (cookies)
+		以上4行代码，是cookies读取。
+
+	def sign_in():
+		url = ' https://wordpress-edu-3autumn.localprod.forc.work/wp-login.php'
+		data = {'log': input('请输入你的账号'),
+				'pwd': input('请输入你的密码'),
+				'wp-submit': '登录',
+				'redirect_to': 'https://wordpress-edu-3autumn.localprod.forc.work/wp-admin/',
+				'testcookie': '1'}
+		session.post(url, headers=headers, data=data)
+		cookies_dict = requests.utils.dict_from_cookiejar(session.cookies)
+		cookies_str = json.dumps(cookies_dict)
+		f = open('cookies.txt', 'w')
+		f.write(cookies_str)
+		f.close()
+		以上5行代码，是cookies存储。
+
+
+	def write_message():
+		url_2 = 'https://wordpress-edu-3autumn.localprod.forc.work/wp-comments-post.php'
+		data_2 = {
+			'comment': input('请输入你要发表的评论：'),
+			'submit': '发表评论',
+			'comment_post_ID': '13',
+			'comment_parent': '0'
+		}
+		return (session.post(url_2, headers=headers, data=data_2))
+		以上9行代码，是发表评论。
+
+	try:
+		session.cookies = cookies_read()
+	except FileNotFoundError:
+		sign_in()
+		session.cookies = cookies_read()
+
+	num = write_message()
+	if num.status_code == 200:
+		print('成功啦！')
+	else:
+		sign_in()
+		session.cookies = cookies_read()
+		num = write_message()
+
+---
+
+
+	import requests,json
+	session = requests.session()
+	创建会话。
+	headers = {
+	'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36'
+	}
+	添加请求头，避免被反爬虫。
+	try:
+	如果能读取到cookies文件，执行以下代码，跳过except的代码，不用登录就能发表评论。
+		cookies_txt = open('cookies.txt', 'r')
+		以reader读取模式，打开名为cookies.txt的文件。
+		cookies_dict = json.loads(cookies_txt.read())
+		调用json模块的loads函数，把字符串转成字典。
+		cookies = requests.utils.cookiejar_from_dict(cookies_dict)
+		把转成字典的cookies再转成cookies本来的格式。
+		session.cookies = cookies
+		获取会话下的cookies
+
+	except FileNotFoundError:
+	如果读取不到cookies文件，程序报“FileNotFoundError”（找不到文件）的错，则执行以下代码，重新登录获取cookies，再评论。
+
+		url = ' https://wordpress-edu-3autumn.localprod.forc.work/wp-login.php'
+		登录的网址。
+		data = {'log': input('请输入你的账号:'),
+				'pwd': input('请输入你的密码:'),
+				'wp-submit': '登录',
+				'redirect_to': 'https://wordpress-edu-3autumn.localprod.forc.work/wp-admin/',
+				'testcookie': '1'}
+		登录的参数。
+		session.post(url, headers=headers, data=data)
+		在会话下，用post发起登录请求。
+
+		cookies_dict = requests.utils.dict_from_cookiejar(session.cookies)
+		把cookies转化成字典。
+		cookies_str = json.dumps(cookies_dict)
+		调用json模块的dump函数，把cookies从字典再转成字符串。
+		f = open('cookies.txt', 'w')
+		创建名为cookies.txt的文件，以写入模式写入内容
+		f.write(cookies_str)
+		把已经转成字符串的cookies写入文件
+		f.close()
+		关闭文件
+
+	url_1 = 'https://wordpress-edu-3autumn.localprod.forc.work/wp-comments-post.php'
+	文章的网址。
+	data_1 = {
+	'comment': input('请输入你想评论的内容：'),
+	'submit': '发表评论',
+	'comment_post_ID': '13',
+	'comment_parent': '0'
+	}
+	评论的参数。
+	session.post(url_1, headers=headers, data=data_1)
+	在会话下，用post发起评论请求。
+---
+
+## cookies与session
+其实，计算机之所以需要cookies和session，是因为HTTP协议是无状态的协议。
+
+何为无状态？就是一旦浏览器和服务器之间的请求和响应完毕后，两者会立马断开连接，也就是恢复成无状态。
+
+这样会导致：服务器永远无法辨认，也记不住用户的信息，像一条只有7秒记忆的金鱼。是cookies和session的出现，才破除了web发展史上的这个难题。
+
+cookies不仅仅能实现自动登录，因为它本身携带了session的编码信息，网站还能根据cookies，记录你的浏览足迹，从而知道你的偏好，只要再加以推荐算法，就可以实现给你推送定制化的内容。
+
+比如，淘宝会根据你搜索和浏览商品的记录，给你推送符合你偏好的商品，增加你的购买率。cookies和session在这其中起到的作用，可谓举足轻重。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
