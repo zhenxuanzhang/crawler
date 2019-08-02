@@ -11,13 +11,13 @@
 
 ## 浏览器工作原理
 
-![](crawlermote_files/1.jpg)
+![](crawlernote_files/1.jpg)
 
 	首先，我们在浏览器输入网址（也可以叫URL）。然后，浏览器向服务器传达了我们想访问某个网页的需求，这个过程就叫做【请求】。
 	紧接着，服务器把你想要的网站数据发送给浏览器，这个过程叫做【响应】。
 	所以浏览器和服务器之间，先请求，后响应，有这么一层关系。
 
-![](crawlermote_files/2.jpg)
+![](crawlernote_files/2.jpg)
 
 	当服务器把数据响应给浏览器之后，浏览器并不会直接把数据丢给你。因为这些数据是用计算机的语言写的，浏览器还要把这些数据翻译成你能看得懂的样子，这是浏览器做的另一项工作【解析数据】。
 	紧接着，我们就可以在拿到的数据中，挑选出对我们有用的数据，这是【提取数据】。
@@ -27,7 +27,7 @@
 
 ## 爬虫的工作原理
 
-![](crawlermote_files/3.jpg)
+![](crawlernote_files/3.jpg)
 
 	当你决定去某个网页后，
 	首先，爬虫可以模拟浏览器去向服务器发出请求；
@@ -36,9 +36,9 @@
 	最后，爬虫可以批量地把数据存储到本地。
 
 
-![](crawlermote_files/4.jpg)
+![](crawlernote_files/4.jpg)
 
-![](crawlermote_files/5.jpg)
+![](crawlernote_files/5.jpg)
 
 	第0步：获取数据。爬虫程序会根据我们提供的网址，向服务器发起请求，然后返回数据。
 
@@ -53,7 +53,7 @@
 
 ## 爬虫学习大纲
 
-![](crawlermote_files/6.jpg)
+![](crawlernote_files/6.jpg)
 
 ## requests
 
@@ -72,18 +72,18 @@
 
 ### Response对象的常用属性
 
-![](crawlermote_files/9.jpg)  
+![](crawlernote_files/9.jpg)  
 - res是一个对象，属于requests.models.Response类。
 
-![](crawlermote_files/7.jpg)
+![](crawlernote_files/7.jpg)
 
 #### response.status_code
 
-![](crawlermote_files/10.jpg)  
+![](crawlernote_files/10.jpg)  
 
-![](crawlermote_files/8.jpg)
+![](crawlernote_files/8.jpg)
 
-![](crawlermote_files/11.jpg)
+![](crawlernote_files/11.jpg)
 
 
 #### response.content
@@ -147,7 +147,7 @@
 
 #### requests总结
 
-![](crawlermote_files/12.jpg)
+![](crawlernote_files/12.jpg)
 
 
 ## 爬虫伦理
@@ -214,20 +214,20 @@
 - 标签通常是成对出现的：前面的是【开始标签】，比如<body>；后面的是【结束标签】，如</body>
 - 也有标签是形单影只地出现，比如HTML代码的第四行<meta charset="utf-8">（定义网页编码格式为 utf-8）
 
-![](crawlermote_files/13.jpg)
+![](crawlernote_files/13.jpg)
 
 
 - 开始标签+结束标签+中间的所有内容，它们在一起就组成了【元素】
 
-![](crawlermote_files/14.jpg)
+![](crawlernote_files/14.jpg)
 
 - 常见元素  
 
-![](crawlermote_files/15.jpg)
+![](crawlernote_files/15.jpg)
 
 ### 网页头和网页体
 
-![](crawlermote_files/16.jpg)
+![](crawlernote_files/16.jpg)
 
 
 	HTML文档的最外层标签一定是<html>，里面嵌套着<head>元素与<body>元素。
@@ -246,7 +246,7 @@
 	</head>
 
 
-![](crawlermote_files/17.jpg)
+![](crawlernote_files/17.jpg)
 
 
 ### HTML属性
@@ -295,9 +295,9 @@
 - 但id属性用于标识唯一的元素，而class用于标识一系列的元素。
 - id就像是学生的学生证号码，每个人都是唯一的；而学生们可以属于同一个班级，班级就像class
 
-![](crawlermote_files/18.jpg)
+![](crawlernote_files/18.jpg)
 
-![](crawlermote_files/19.jpg)
+![](crawlernote_files/19.jpg)
 
 
 # 爬虫初体验
@@ -309,7 +309,7 @@
 ### 解析数据
 
 #### BeautifulSoup()
-![](crawlermote_files/20.jpg)
+![](crawlernote_files/20.jpg)
 
 第0个参数是要被解析的文本，注意了，它必须必须必须是字符串。
 括号中的第1个参数用来标识解析器，我们要用的是一个Python内置库：html.parser。（它不是唯一的解析器，但是比较简单的）
@@ -345,7 +345,7 @@
 
 ### 提取数据
 
-![](crawlermote_files/21.jpg)
+![](crawlernote_files/21.jpg)
 
 #### find()
 - find()与find_all()是BeautifulSoup对象的两个方法
@@ -353,7 +353,7 @@
 它们可以匹配html的标签和属性，把BeautifulSoup对象里符合要求的数据都提取出来。
 它俩的用法基本是一样的，区别在于，find()只提取首个满足要求的数据，而find_all()提取出的是所有满足要求的数据。
 
-![](crawlermote_files/22.jpg)
+![](crawlernote_files/22.jpg)
 ---
 
 	items = soup.find_all('div') #用find_all()把所有符合要求的数据提取出来，并放在变量items里
@@ -366,7 +366,7 @@
 
 #### tag
 - Tag对象
-![](crawlermote_files/23.jpg)
+![](crawlernote_files/23.jpg)
 
 ---
 	for item in items:
@@ -410,13 +410,13 @@
 
 ## 对象的变化过程
 
-![](crawlermote_files/24.jpg)
+![](crawlernote_files/24.jpg)
 
 我们的操作对象是这样的：Response对象——字符串——BS对象。
 到这里，又产生了两条分岔：一条是BS对象——Tag对象；
 另一条是BS对象——列表——Tag对象。
 
-![](crawlermote_files/25.jpg)
+![](crawlernote_files/25.jpg)
 
 
 # 下厨房项目
@@ -475,7 +475,7 @@
 
 - Network的功能是：记录在当前页面上发生的所有请求。
 
-![](crawlermote_files/26.jpg)
+![](crawlernote_files/26.jpg)
 
 - [周杰伦歌单](https://y.qq.com/portal/search.html#page=1&searchid=1&remoteplace=txt.yqq.top&t=song&w=%E5%91%A8%E6%9D%B0%E4%BC%A6)  
 
@@ -494,17 +494,17 @@
 
 #### Network用法
 
-![](crawlermote_files/27.jpg)
+![](crawlernote_files/27.jpg)
 
 
 	第0行的左侧，红色的圆钮是启用Network监控（默认高亮打开），灰色圆圈是清空面板上的信息。右侧勾选框Preserve log，它的作用是“保留请求日志”。如果不点击这个，当发生页面跳转的时候，记录就会被清空。所以，我们在爬取一些会发生跳转的网页时，会点亮它。
 	第1行，是对请求进行分类查看。我们最常用的是：ALL（查看全部）/XHR（仅查看XHR，我们等会重点讲它）/Doc（Document，第0个请求一般在这里），有时候也会看看：Img（仅查看图片）/Media（仅查看媒体文件）/Other（其他）。最后，JS和CSS，则是前端代码，负责发起请求和页面实现；Font是文字的字体；而理解WS和Manifest，需要网络编程的知识
 
-![](crawlermote_files/28.jpg)
+![](crawlernote_files/28.jpg)
 
 夹在第2行和第1行中间的，是一个时间轴。记录什么时间，有哪些请求。而第2行，就是各个请求
 
-![](crawlermote_files/29.jpg)
+![](crawlernote_files/29.jpg)
 
 #### XHR
 
@@ -524,16 +524,16 @@ Network中，有一类非常重要的请求叫做XHR（当你把鼠标在XHR上�
 - 我们的歌曲清单不在网页源代码里，而且也不是图片，不是媒体文件，自然只会是在XHR里
 - 点击查看XHR
 
-![](crawlermote_files/30.jpg)
+![](crawlernote_files/30.jpg)
 
 从左往右分别是：Headers：标头（请求信息）、Preview：预览、Response：原始信息、Timing：时间。
 
 - 点击Preview，你能在里面发现我们想要的信息：歌名就藏在里面！
 - 那如何把这些歌曲名拿到呢？这就需要我们去看看最左侧的Headers
 
-![](crawlermote_files/31.jpg)
+![](crawlernote_files/31.jpg)
 
-![](crawlermote_files/32.jpg)
+![](crawlernote_files/32.jpg)
 
 - General里的Requests URL就是我们应该去访问的链接
 
@@ -561,12 +561,12 @@ Network中，有一类非常重要的请求叫做XHR（当你把鼠标在XHR上�
 
 - 组织数据的方式也有规律，规律有三条：
 
-![](crawlermote_files/33.jpg)
+![](crawlernote_files/33.jpg)
 
 
 json则是另一种组织数据的格式，长得和Python中的列表/字典非常相像。它和html一样，常用来做网络数据传输。刚刚我们在XHR里查看到的列表/字典，严格来说其实它不是列表/字典，它是json。
 
-![](crawlermote_files/34.jpg)
+![](crawlernote_files/34.jpg)
 
 为什么要把它表示成字符串？答案很简单，因为不是所有的编程语言都能读懂Python里的数据类型（如，列表/字符串），但是所有的编程语言，都支持文本（比如在Python中，用字符串这种数据类型来表示文本）这种最朴素的数据类型。
 
@@ -580,7 +580,7 @@ json则是另一种组织数据的格式，长得和Python中的列表/字典非
 
 - 查看requests库处理json数据的方法
 
-![](crawlermote_files/35.jpg)
+![](crawlernote_files/35.jpg)
 
 ---
 	import requests
@@ -609,7 +609,7 @@ json则是另一种组织数据的格式，长得和Python中的列表/字典非
 ## 利用XHR找数据
 
 - 学会如何判断我们想要的信息是在Html，还是在XHR里：
-![](crawlermote_files/36.jpg)
+![](crawlernote_files/36.jpg)
 
 ## 带参数请求数据
 
@@ -636,11 +636,11 @@ json则是另一种组织数据的格式，长得和Python中的列表/字典非
 
 ---
 
-![](crawlermote_files/37.jpg)
+![](crawlernote_files/37.jpg)
 
 我们来让这个代码变好看些。事实上，requests模块里的requests.get()提供了一个参数叫params，可以让我们用字典的形式，把参数传进去。
 
-![](crawlermote_files/38.jpg)
+![](crawlernote_files/38.jpg)
 
 所以，其实我们可以把Query String Parametres里的内容，直接复制下来，封装为一个字典，传递给params。只是有一点要特别注意：要给他们打引号，让它们变字符串。
 
@@ -688,7 +688,7 @@ json则是另一种组织数据的格式，长得和Python中的列表/字典非
 ## Request Headers
 - 服务器怎么判断访问者是一个普通的用户（通过浏览器），还是一个爬虫者（通过代码）
 
-![](crawlermote_files/39.jpg)
+![](crawlernote_files/39.jpg)
 
 Requests Headers，我们把它称作请求头。它里面会有一些关于该请求的基本信息，比如：这个请求是从什么设备什么浏览器上发出？这个请求是从哪个页面跳转而来？
 user-agent（中文：用户代理）会记录你电脑的信息和浏览器版本（如我的，就是windows10的64位操作系统，使用谷歌浏览器）
@@ -698,7 +698,7 @@ origin（中文：源头）和referer（中文：引用来源）则记录了这�
 
 ### 添加Requests Headers
 
-![](crawlermote_files/40.jpg)
+![](crawlernote_files/40.jpg)
 
 ---
 	import requests
@@ -759,7 +759,7 @@ csv是一种字符串文件的格式，它组织数据的语法就是在字符�
 
 ## 存储数据的基础知识
 
-![](crawlermote_files/41.jpg)
+![](crawlernote_files/41.jpg)
 
 - 操作csv文件我们需要借助csv模块；操作Excel文件则需要借助openpyxl模块。
 
@@ -772,7 +772,7 @@ csv是一种字符串文件的格式，它组织数据的语法就是在字符�
 	创建csv文件，我们要先调用open()函数，传入参数：文件名“demo.csv”、写入模式“w”、newline=''、encoding='utf-8'。
 
 
-![](crawlermote_files/42.jpg)
+![](crawlernote_files/42.jpg)
 
 加newline=' '参数的原因是，可以避免csv文件出现两倍的行距（就是能避免表格的行与行之间出现空白行）。加encoding='utf-8'，可以避免编码问题导致的报错或乱码。
 
@@ -803,7 +803,7 @@ writerow()函数里，需要放入列表参数，所以我们得把要写入的�
 
 ### Excel写入与读取
 
-![](crawlermote_files/43.jpg)
+![](crawlernote_files/43.jpg)
 
 一个Excel文档也称为一个工作薄（workbook），每个工作薄里可以有多个工作表（wordsheet），当前打开的工作表又叫活动表。
 
@@ -850,7 +850,7 @@ writerow()函数里，需要放入列表参数，所以我们得把要写入的�
 
 ## 复习
 
-![](crawlermote_files/44.jpg)
+![](crawlernote_files/44.jpg)
 
 从Response对象开始，我们就分成了两条路径，一条路径是数据放在HTML里，所以我们用BeautifulSoup库去解析数据和提取数据；另一条，数据作为Json存储起来，所以我们用response.json()方法去解析，然后提取、存储数据。
 
@@ -917,13 +917,13 @@ writerow()函数里，需要放入列表参数，所以我们得把要写入的�
 - [蜘蛛侠网站](https://wordpress-edu-3autumn.localprod.forc.work/wp-login.php)
 - 账号：spiderman，密码：crawler334566
 
-![](crawlermote_files/45.jpg)
+![](crawlernote_files/45.jpg)
 
 上图左边是“正常人”的操作：填上账号和密码；右边我们可以用工程师的思维，来分析浏览器的登录请求是怎么发送的。你需要做的是：先正常操作——填写完账号密码（别点击登录），再用工程师的做法操作：右击打开“检查”工具，点击【network】，勾选【preserve log】（持续显示请求记录，防止请求记录被刷新）。
 
 展开第0个请求【wp-login.php】，浏览一下【headers】。在【General】键里，我们可以先只看前两个参数【Request URL】（请求网址）和【Request Method】（请求方式）。
 
-![](crawlermote_files/46.jpg)
+![](crawlernote_files/46.jpg)
 
 这里的请求方式是post，而不是我们之前学过的get。
 
@@ -938,7 +938,7 @@ writerow()函数里，需要放入列表参数，所以我们得把要写入的�
 
 get和post是两种最常用的请求方式，除此之外，还有其他类型的请求方式，如head、options等
 
-![](crawlermote_files/47.jpg)
+![](crawlernote_files/47.jpg)
 
 【requests headers】存储的是浏览器的请求信息，【response headers】存储的是服务器的响应信息。我们这一关要找的cookies就在其中。
 
@@ -948,7 +948,7 @@ get和post是两种最常用的请求方式，除此之外，还有其他类型�
 ## cookies及其用法
 
 
-![](crawlermote_files/48.jpg)
+![](crawlernote_files/48.jpg)
 
 当你登录博客账号spiderman，并勾选“记住我”，服务器就会生成一个cookies和spiderman这个账号绑定。接着，它把这个cookies告诉你的浏览器，让浏览器把cookies存储到你的本地电脑。当下一次，浏览器带着cookies访问博客，服务器会知道你是spiderman，你不需要再重复输入账号密码，即可直接访问。
 
@@ -995,7 +995,7 @@ get和post是两种最常用的请求方式，除此之外，还有其他类型�
 ---
 
 
-![](crawlermote_files/49.jpg)
+![](crawlernote_files/49.jpg)
 
 
 ## session及其用法
@@ -1015,7 +1015,7 @@ get和post是两种最常用的请求方式，除此之外，还有其他类型�
 ---
 	- 创建session来处理cookies。
 
-	![](crawlermote_files/50.jpg)
+	![](crawlernote_files/50.jpg)
 
 	---
 	import requests
@@ -1081,9 +1081,9 @@ RequestsCookieJar是cookies对象的类，cookies本身的内容有点像一个�
 
 json模块能把字典转成字符串。我们或许可以先把cookies转成字典，然后再通过json模块转成字符串。这样，就能用open函数把cookies存储成txt文件。
 
-![](crawlermote_files/51.jpg)
+![](crawlernote_files/51.jpg)
 
-![](crawlermote_files/52.jpg)
+![](crawlernote_files/52.jpg)
 
 - 把cookies存储成txt文件的代码如下
 
@@ -1120,13 +1120,13 @@ json模块能把字典转成字符串。我们或许可以先把cookies转成字
 	关闭文件。
 ---
 
-- ookies的存储我们搞定了，但还得搞定cookies的读取，才能解决每次发表评论都得先输入账号密码的问题。
+- cookies的存储我们搞定了，但还得搞定cookies的读取，才能解决每次发表评论都得先输入账号密码的问题。
 
 ## 读取cookies
 
 - 存储cookies时，是把它先转成字典，再转成字符串。读取cookies则刚好相反，要先把字符串转成字典，再把字典转成cookies本来的格式。
 
-![](crawlermote_files/53.jpg)
+![](crawlernote_files/53.jpg)
 
 - 读取cookies的代码如下：
 
@@ -1275,26 +1275,495 @@ cookies不仅仅能实现自动登录，因为它本身携带了session的编码
 
 
 
+# selenium
+
+- 它可以用几行代码，控制浏览器，做出自动打开、输入、点击等操作，就像是有一个真正的用户在操作一样。
+
+首先，当你遇到验证码很复杂的网站时，selenium允许让人去手动输入验证码，然后把剩下的操作交给机器。
+
+而对于那些交互复杂、加密复杂的网站，selenium问题简化，爬动态网页如爬静态网页一样简单
+
+- 静态网页
+第1关教你用html写出的网页，就是静态网页。我们使用BeautifulSoup爬取这类型网页，因为网页源代码中就包含着网页的所有信息，因此，网页地址栏的URL就是网页源代码的URL。
+
+![](crawlernote_files/54.jpg)
+
+- 动态网页
+
+后来，你开始接触更复杂的网页，比如QQ音乐，要爬取的数据不在HTML源代码中，而是在json中，你就不能直接使用网址栏的URL了，而需要找到json数据的真实URL。这就是一种动态网页。
+
+![](crawlernote_files/55.jpg)
+
+- selenium优缺点
+在遇到页面交互复杂或是URL加密逻辑复杂的情况时，selenium就派上了用场，它可以真实地打开一个浏览器，等待所有数据都加载到Elements中之后，再把这个网页当做静态网页爬取就好了。
+说了这么多优点，使用selenium时，当然也有美中不足之处。
+由于要真实地运行本地浏览器，打开浏览器以及等待网渲染完成需要一些时间，selenium的工作不可避免地牺牲了速度和更多资源，不过，至少不会比人慢。
 
 
 
+## selenium用法
+
+- selenium的脚本可以控制所有常见浏览器的操作，在使用之前，需要安装浏览器的驱动。
+
+### 设置浏览器引擎
+
+	本地Chrome浏览器设置方法
+	from selenium import webdriver #从selenium库中调用webdriver模块
+	driver = webdriver.Chrome() # 设置引擎为Chrome，真实地打开一个Chrome浏览器
 
 
+### 获取数据
+	
+		driver.get('https://localprod.pandateacher.com/python-manuscript/hello-spiderman/') # 打开网页
+	time.sleep(1)
+	driver.close() # 关闭浏览器
+
+get(URL)是webdriver的一个方法，它的使命是为你打开指定URL的网页。
+driver.close()是关闭浏览器驱动，每次调用了webdriver之后，都要在用完它之后加上一行driver.close()用来关闭它。
 
 
+### 解析与提取数据  
+
+selenium库同样也具备解析数据、提取数据的能力。它和BeautifulSoup的底层原理一致，但在一些细节和语法上有所出入。
+
+首先明显的一个不同即是：selenium所解析提取的，是Elements中的所有数据，而BeautifulSoup所解析的则只是Network中第0个请求的响应。
+
+---
+	 教学系统的浏览器设置方法
+	from selenium.webdriver.chrome.webdriver import RemoteWebDriver # 从selenium库中调用RemoteWebDriver模块
+	from selenium.webdriver.chrome.options import Options # 从options模块中调用Options类
+	import time
+
+	chrome_options = Options() # 实例化Option对象
+	chrome_options.add_argument('--headless') # 对浏览器的设置
+	driver = RemoteWebDriver("http://chromedriver.python-class-fos.svc:4444/wd/hub", chrome_options.to_capabilities()) # 声明浏览器对象
+
+	driver.get('https://localprod.pandateacher.com/python-manuscript/hello-spiderman/') # 访问页面
+	time.sleep(2) # 等待2秒
+	label = driver.find_element_by_tag_name('label') # 解析网页并提取第一个<lable>标签
+	print(label.text) # 打印label的文本
+	driver.close() # 关闭浏览器
+
+---
+
+而在selenium中，获取到的网页存在了driver中，而后，解析与提取是同时做的，都是由driver这个实例化的浏览器完成。
+
+所以，解析数据是由driver自动完成的，提取数据是driver的一个方法。
+
+![](crawlernote_files/56.jpg)
+
+---
+	 以下方法都可以从网页中提取出'你好，蜘蛛侠！'这段文字
+
+	find_element_by_tag_name：通过元素的名称选择
+	 如<h1>你好，蜘蛛侠！</h1> 
+	 可以使用find_element_by_tag_name('h1')
+
+	find_element_by_class_name：通过元素的class属性选择
+	 如<h1 class="title">你好，蜘蛛侠！</h1>
+	 可以使用find_element_by_class_name('title')
+
+	find_element_by_id：通过元素的id选择
+	 如<h1 id="title">你好，蜘蛛侠！</h1> 
+	 可以使用find_element_by_id('title')
+
+	find_element_by_name：通过元素的name属性选择
+	 如<h1 name="hello">你好，蜘蛛侠！</h1> 
+	 可以使用find_element_by_name('hello')
 
 
+	以下两个方法可以提取出超链接
+
+	find_element_by_link_text：通过链接文本获取超链接
+	 如<a href="spidermen.html">你好，蜘蛛侠！</a>
+	 可以使用find_element_by_link_text('你好，蜘蛛侠！')
+
+	find_element_by_partial_link_text：通过链接的部分文本获取超链接
+	 如<a href="https://localprod.pandateacher.com/python-manuscript/hello-spiderman/">你好，蜘蛛侠！</a>
+	 可以使用find_element_by_partial_link_text('你好')
+---
+
+- WebElement类对象
+提取出的数据属于WebElement类对象，如果直接打印它，返回的是一串对它的描述。
+
+而它与BeautifulSoup中的Tag对象类似，也有一个属性.text，可以把提取出的元素用字符串格式显示。
+
+还想补充的是，WebElement类对象与Tag对象类似，它也有一个方法，可以通过属性名提取属性的值，这个方法是.get_attribute()
+
+![](crawlernote_files/57.jpg)
 
 
+- selenium解析与提取数据的过程中，我们操作的对象转换：
+
+![](crawlernote_files/58.jpg)
 
 
+- 提取多个数据
+
+![](crawlernote_files/59.jpg)
 
 
+- 除了用selenium解析与提取数据，还有一种解决方案，那就是，使用selenium获取网页，然后交给BeautifulSoup解析和提取。
+
+BeautifulSoup需要把字符串格式的网页源代码解析为BeautifulSoup对象，然后再从中提取数据。
+
+selenium刚好可以获取到渲染完整的网页源代码。
+
+如何获取呢？也是使用driver的一个方法：page_source。
+
+- HTML源代码字符串 = driver.page_source 
+
+用requests.get()获取到的是Response对象，在交给BeautifulSoup解析之前，需要用到.text的方法才能将Response对象的内容以字符串的形式返回。
+
+而使用selenium获取到的网页源代码，本身已经是字符串了。
+
+---
+	教学系统的浏览器设置方法
+	from selenium.webdriver.chrome.webdriver import RemoteWebDriver # 从selenium库中调用RemoteWebDriver模块
+	from selenium.webdriver.chrome.options import Options # 从options模块中调用Options类
+	import time
+	chrome_options = Options() # 实例化Option对象
+	chrome_options.add_argument('--headless') # 对浏览器的设置
+	driver = RemoteWebDriver("http://chromedriver.python-class-fos.svc:4444/wd/hub", chrome_options.to_capabilities()) # 声明浏览器对象
+
+	driver.get('https://localprod.pandateacher.com/python-manuscript/hello-spiderman/') # 访问页面
+	time.sleep(2) # 等待两秒，等浏览器加缓冲载数据
+
+	pageSource = driver.page_source # 获取完整渲染的网页源代码
+	print(type(pageSource)) # 打印pageSource的类型
+	print(pageSource) # 打印pageSource
+	driver.close() # 关闭浏览器
+---
+
+获取到了字符串格式的网页源代码之后，就可以用BeautifulSoup解析和提取数据了
 
 
+### 自动操作浏览器
+
+---
+本地Chrome浏览器设置方法
+from selenium import webdriver # 从selenium库中调用webdriver模块
+import time # 调用time模块
+driver = webdriver.Chrome() # 设置引擎为Chrome，真实地打开一个Chrome浏览器
+
+driver.get('https://localprod.pandateacher.com/python-manuscript/hello-spiderman/') # 访问页面
+time.sleep(2) # 暂停两秒，等待浏览器缓冲
+
+teacher = driver.find_element_by_id('teacher') # 找到【请输入你喜欢的老师】下面的输入框位置
+teacher.send_keys('必须是吴枫呀') # 输入文字
+assistant = driver.find_element_by_name('assistant') # 找到【请输入你喜欢的助教】下面的输入框位置
+assistant.send_keys('都喜欢') # 输入文字
+button = driver.find_element_by_class_name('sub') # 找到【提交】按钮
+button.click() # 点击【提交】按钮
+time.sleep(1)
+driver.close() # 关闭浏览器
+---
+
+![](crawlernote_files/60.jpg)
+
+## 用selenium爬取QQ音乐的歌曲评论
+
+---
+教学系统的浏览器设置方法
+from selenium.webdriver.chrome.webdriver import RemoteWebDriver # 从selenium库中调用RemoteWebDriver模块
+from selenium.webdriver.chrome.options import Options # 从options模块中调用Options类
+from bs4 import BeautifulSoup
+import time
+
+chrome_options = Options() # 实例化Option对象
+chrome_options.add_argument('--headless') # 对浏览器的设置
+driver = RemoteWebDriver("http://chromedriver.python-class-fos.svc:4444/wd/hub", chrome_options.to_capabilities()) # 声明浏览器对象
+
+driver.get('https://y.qq.com/n/yqq/song/000xdZuV2LcQ19.html') # 访问页面
+time.sleep(2)
+
+button = driver.find_element_by_class_name('js_get_more_hot') # 根据类名找到【点击加载更多】
+button.click() # 点击
+time.sleep(2) # 等待两秒
+
+pageSource = driver.page_source # 获取Elements中渲染完成的网页源代码
+soup = BeautifulSoup(pageSource,'html.parser')  # 使用bs解析网页
+comments = soup.find('ul',class_='js_hot_list').find_all('li',class_='js_cmt_li') # 使用bs提取元素
+print(len(comments)) # 打印comments的数量
+
+for comment in comments: # 循环
+    sweet = comment.find('p') # 提取评论
+    print ('评论：%s\n ---\n'%sweet.text) # 打印评论
+driver.close() # 关闭浏览器 # 关闭浏览器
+---
 
 
+# 定时与邮件
 
+- 第一是定时功能，即程序可以根据我们设定的时间自动爬取数据；第二是通知功能，即程序可以把爬取到的数据结果以邮件的形式自动发送到我们的邮箱。
+
+- 而对通知部分，选择的是用邮件来通知，我们将使用smtplib、email库来实现这一需求；对定时功能，有一个schedule，方便好用。
+
+## 天气网
+
+- [深圳天气](http://www.weather.com.cn/weather/101280601.shtml)
+
+
+---
+	import requests
+	from bs4 import BeautifulSoup
+	引入requests库和BeautifulSoup库
+	headers={'user-agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'}
+	封装headers
+	url='http://www.weather.com.cn/weather/101280601.shtml'
+	把URL链接赋值到变量url上。
+	res=requests.get(url,headers=headers)
+	发送requests请求，并把响应的内容赋值到变量res中。
+	print(res.status_code)
+	检查响应状态是否正常
+	print(res.text)
+	打印出res对象的网页源代码   
+---
+
+- 解决乱码
+用response.encoding属性就好。好滴，那我们在网页上点击"右键"——"查看网页源代码"，会弹出一个新的标签页，然后搜索charset，查看一下编码方式。
+
+网页是用utf-8编码的。
+那么只要用response.encoding转换一下编码就可以了
+
+---
+	import requests
+	from bs4 import BeautifulSoup
+	headers={'user-agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'}
+	url='http://www.weather.com.cn/weather/101280601.shtml'
+	res=requests.get(url,headers=headers)
+	res.encoding='utf-8'
+	print(res.status_code)
+	print(res.text)
+---
+
+## 发邮件
+
+![](crawlernote_files/61.jpg)
+
+- 用到两个库——smtplib和email
+
+### smtplib
+连接服务器需要用到smtplib库。为什么叫这个名字呢？其实，SMTP代表简单邮件传输协议，相当于一种计算机之间发邮件的约定。
+
+---
+	import smtplib 
+	smtplib是python的一个内置库，所以不需要用pip安装
+	mailhost='smtp.qq.com'
+	把qq邮箱的服务器地址赋值到变量mailhost上，地址需要是字符串的格式。
+	qqmail = smtplib.SMTP()
+	实例化一个smtplib模块里的SMTP类的对象，这样就可以SMTP对象的方法和属性了
+	qqmail.connect(mailhost,25)
+	连接服务器，第一个参数是服务器地址，第二个参数是SMTP端口号。
+---
+
+第7行代码是用SMTP对象的connect()方法连接服务器，第一个参数是获取到的服务器地址，第二个参数是SMTP端口号——25。
+
+端口号的选择不是唯一的，但是25是一个最简单、最基础的端口号，所以我们填25。
+
+---
+	account = input('请输入你的邮箱：')
+	获取邮箱账号
+	password = input('请输入你的密码：')
+	获取邮箱密码
+	qqmail.login(account,password)
+	登录邮箱，第一个参数为邮箱账号，第二个参数为邮箱密码    
+
+	receiver=input('请输入收件人的邮箱：')
+	获取收件人的邮箱
+---
+
+用input()获取邮箱密码，但注意了，这里可不是你平时登录邮箱的密码！
+
+这个密码需要我们去到这里获取：请打开https://mail.qq.com/，登录你的邮箱。然后点击位于顶部的【设置】按钮，选择【账户设置】，然后下拉到这个位置。
+
+![](crawlernote_files/62.jpg)
+
+把首个SMTP服务开启。这时，QQ邮箱会提供给你一个授权码，注意保护好你的授权码：
+
+![](crawlernote_files/63.jpg)
+
+
+### email
+- 填写主题和撰写正文，在这里需要用到email库。
+
+---
+	from email.mime.text import MIMEText
+	from email.header import Header
+	引入Header和MIMEText模块
+	content=input('请输入邮件正文：')
+	输入你的邮件正文
+	message = MIMEText(content, 'plain', 'utf-8')
+	实例化一个MIMEText邮件对象，该对象需要写进三个参数，分别是邮件正文，文本格式和编码.
+	subject = input('请输入你的邮件主题：')
+	用input()获取邮件主题  
+	message['Subject'] = Header(subject, 'utf-8')
+	在等号的右边，是实例化了一个Header邮件头对象，该对象需要写入两个参数，分别是邮件主题和编码，然后赋值给等号左边的变量message['Subject']。
+---
+
+	qqmail.sendmail(sender, receiver, message.as_string())
+	发送邮件，调用了sendmail()方法，写入三个参数，分别是发件人，收件人，和字符串格式的正文。
+	qqmail.quit()
+	退出邮箱
+---
+
+希望发送成功后能显示“邮件发送成功”，失败的时候能提示我们“邮件发送失败”，可以使用try语句来实现。
+
+
+	try:
+		qqmail.sendmail(sender, receiver, message.as_string())
+		print ('邮件发送成功')
+	except:
+		print ('邮件发送失败')
+	qqmail.quit()   
+
+
+- 完整代码
+
+---
+	import smtplib 
+	from email.mime.text import MIMEText
+	from email.header import Header
+	引入smtplib、MIMETex和Header
+
+	mailhost='smtp.qq.com'
+	把qq邮箱的服务器地址赋值到变量mailhost上，地址应为字符串格式
+	qqmail = smtplib.SMTP()
+	实例化一个smtplib模块里的SMTP类的对象，这样就可以调用SMTP对象的方法和属性了
+	qqmail.connect(mailhost,25)
+	连接服务器，第一个参数是服务器地址，第二个参数是SMTP端口号。
+	以上，皆为连接服务器。
+
+	account = input('请输入你的邮箱：')
+	获取邮箱账号，为字符串格式
+	password = input('请输入你的密码：')
+	获取邮箱密码，为字符串格式
+	qqmail.login(account,password)
+	登录邮箱，第一个参数为邮箱账号，第二个参数为邮箱密码
+	以上，皆为登录邮箱。
+
+	receiver=input('请输入收件人的邮箱：')
+	获取收件人的邮箱。
+
+	content=input('请输入邮件正文：')
+	输入你的邮件正文，为字符串格式
+	message = MIMEText(content, 'plain', 'utf-8')
+	实例化一个MIMEText邮件对象，该对象需要写进三个参数，分别是邮件正文，文本格式和编码
+	subject = input('请输入你的邮件主题：')
+	输入你的邮件主题，为字符串格式
+	message['Subject'] = Header(subject, 'utf-8')
+	在等号的右边是实例化了一个Header邮件头对象，该对象需要写入两个参数，分别是邮件主题和编码，然后赋值给等号左边的变量message['Subject']。
+	以上，为填写主题和正文。
+
+	try:
+		qqmail.sendmail(account, receiver, message.as_string())
+		print ('邮件发送成功')
+	except:
+		print ('邮件发送失败')
+	qqmail.quit()
+	以上为发送邮件和退出邮箱。
+---
+
+
+## 定时
+
+关于时间，其实Python有两个内置的标准库——time和datetime（我们在基础课也学过time.sleep()）。
+
+但在这里，我们不准备完全依靠标准库来实现，而准备选取第三方库——schedule。
+
+原因在于：标准库一般意味着最原始最基础的功能，第三方库很多是去调用标准库中封装好了的操作函数。比如schedule，就是用time和datetime来实现的。
+
+而对于我们需要的定时功能，time和datetime当然能实现，但操作逻辑会相对复杂；而schedule就是可以直接解决定时功能，代码比较简单，这是我们选择schedule的原因。
+
+- 官方文档
+![](crawlernote_files/64.jpg)
+
+---
+	import schedule
+	import time
+	引入schedule和time
+
+	def job():
+		print("I'm working...")
+	定义一个叫job的函数，函数的功能是打印'I'm working...'
+
+	schedule.every(10).minutes.do(job)       #部署每10分钟执行一次job()函数的任务
+	schedule.every().hour.do(job)            #部署每×小时执行一次job()函数的任务
+	schedule.every().day.at("10:30").do(job) #部署在每天的10:30执行job()函数的任务
+	schedule.every().monday.do(job)          #部署每个星期一执行job()函数的任务
+	schedule.every().wednesday.at("13:15").do(job)#部署每周三的13：15执行函数的任务
+
+	while True:
+		schedule.run_pending()
+		time.sleep(1)    
+	13-15都是检查部署的情况，如果任务准备就绪，就开始执行任务。   
+
+---
+
+## 代码组装
+
+- 爬虫的代码
+---
+	import requests
+	from bs4 import BeautifulSoup
+
+	def weather_spider():
+		headers={'user-agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'}
+		url='http://www.weather.com.cn/weather/101280601.shtml'
+		res=requests.get(url,headers=headers)
+		res.encoding='utf-8'
+		soup=BeautifulSoup(res.text,'html.parser')
+		data1= soup.find(class_='tem')
+		data2= soup.find(class_='wea')
+		tem=data1.text
+		weather=data2.text
+		return tem,weather
+
+---
+
+- 邮件的程序
+
+---
+	import smtplib
+	from email.mime.text import MIMEText
+	from email.header import Header
+
+	account = input('请输入你的邮箱：')
+	password = input('请输入你的密码：')
+	receiver = input('请输入收件人的邮箱：')
+
+	def send_email(tem,weather):
+		global account,password,receiver
+		mailhost='smtp.qq.com'
+		qqmail = smtplib.SMTP()
+		qqmail.connect(mailhost,25)
+		qqmail.login(account,password)
+		content= '亲爱的，今天的天气是：'+tem+weather
+		message = MIMEText(content, 'plain', 'utf-8')
+		subject = '今日天气预报'
+		message['Subject'] = Header(subject, 'utf-8')
+		try:
+			qqmail.sendmail(account, receiver, message.as_string())
+			print ('邮件发送成功')
+		except:
+			print ('邮件发送失败')
+		qqmail.quit()
+---
+
+- 执行
+
+---
+	def job():
+		print('开始一次任务')
+		tem,weather = weather_spider()
+		send_email(tem,weather)
+		print('任务完成')
+
+	schedule.every().day.at("07:30").do(job) 
+	while True:
+		schedule.run_pending()
+		time.sleep(1)
+---
 
 
 
