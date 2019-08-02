@@ -1441,22 +1441,22 @@ selenium刚好可以获取到渲染完整的网页源代码。
 ### 自动操作浏览器
 
 ---
-本地Chrome浏览器设置方法
-from selenium import webdriver # 从selenium库中调用webdriver模块
-import time # 调用time模块
-driver = webdriver.Chrome() # 设置引擎为Chrome，真实地打开一个Chrome浏览器
+	本地Chrome浏览器设置方法
+	from selenium import webdriver # 从selenium库中调用webdriver模块
+	import time # 调用time模块
+	driver = webdriver.Chrome() # 设置引擎为Chrome，真实地打开一个Chrome浏览器
 
-driver.get('https://localprod.pandateacher.com/python-manuscript/hello-spiderman/') # 访问页面
-time.sleep(2) # 暂停两秒，等待浏览器缓冲
+	driver.get('https://localprod.pandateacher.com/python-manuscript/hello-spiderman/') # 访问页面
+	time.sleep(2) # 暂停两秒，等待浏览器缓冲
 
-teacher = driver.find_element_by_id('teacher') # 找到【请输入你喜欢的老师】下面的输入框位置
-teacher.send_keys('必须是吴枫呀') # 输入文字
-assistant = driver.find_element_by_name('assistant') # 找到【请输入你喜欢的助教】下面的输入框位置
-assistant.send_keys('都喜欢') # 输入文字
-button = driver.find_element_by_class_name('sub') # 找到【提交】按钮
-button.click() # 点击【提交】按钮
-time.sleep(1)
-driver.close() # 关闭浏览器
+	teacher = driver.find_element_by_id('teacher') # 找到【请输入你喜欢的老师】下面的输入框位置
+	teacher.send_keys('必须是吴枫呀') # 输入文字
+	assistant = driver.find_element_by_name('assistant') # 找到【请输入你喜欢的助教】下面的输入框位置
+	assistant.send_keys('都喜欢') # 输入文字
+	button = driver.find_element_by_class_name('sub') # 找到【提交】按钮
+	button.click() # 点击【提交】按钮
+	time.sleep(1)
+	driver.close() # 关闭浏览器
 ---
 
 ![](crawlernote_files/60.jpg)
@@ -1464,32 +1464,32 @@ driver.close() # 关闭浏览器
 ## 用selenium爬取QQ音乐的歌曲评论
 
 ---
-教学系统的浏览器设置方法
-from selenium.webdriver.chrome.webdriver import RemoteWebDriver # 从selenium库中调用RemoteWebDriver模块
-from selenium.webdriver.chrome.options import Options # 从options模块中调用Options类
-from bs4 import BeautifulSoup
-import time
+	教学系统的浏览器设置方法
+	from selenium.webdriver.chrome.webdriver import RemoteWebDriver # 从selenium库中调用RemoteWebDriver模块
+	from selenium.webdriver.chrome.options import Options # 从options模块中调用Options类
+	from bs4 import BeautifulSoup
+	import time
 
-chrome_options = Options() # 实例化Option对象
-chrome_options.add_argument('--headless') # 对浏览器的设置
-driver = RemoteWebDriver("http://chromedriver.python-class-fos.svc:4444/wd/hub", chrome_options.to_capabilities()) # 声明浏览器对象
+	chrome_options = Options() # 实例化Option对象
+	chrome_options.add_argument('--headless') # 对浏览器的设置
+	driver = RemoteWebDriver("http://chromedriver.python-class-fos.svc:4444/wd/hub", chrome_options.to_capabilities()) # 声明浏览器对象
 
-driver.get('https://y.qq.com/n/yqq/song/000xdZuV2LcQ19.html') # 访问页面
-time.sleep(2)
+	driver.get('https://y.qq.com/n/yqq/song/000xdZuV2LcQ19.html') # 访问页面
+	time.sleep(2)
 
-button = driver.find_element_by_class_name('js_get_more_hot') # 根据类名找到【点击加载更多】
-button.click() # 点击
-time.sleep(2) # 等待两秒
+	button = driver.find_element_by_class_name('js_get_more_hot') # 根据类名找到【点击加载更多】
+	button.click() # 点击
+	time.sleep(2) # 等待两秒
 
-pageSource = driver.page_source # 获取Elements中渲染完成的网页源代码
-soup = BeautifulSoup(pageSource,'html.parser')  # 使用bs解析网页
-comments = soup.find('ul',class_='js_hot_list').find_all('li',class_='js_cmt_li') # 使用bs提取元素
-print(len(comments)) # 打印comments的数量
+	pageSource = driver.page_source # 获取Elements中渲染完成的网页源代码
+	soup = BeautifulSoup(pageSource,'html.parser')  # 使用bs解析网页
+	comments = soup.find('ul',class_='js_hot_list').find_all('li',class_='js_cmt_li') # 使用bs提取元素
+	print(len(comments)) # 打印comments的数量
 
-for comment in comments: # 循环
-    sweet = comment.find('p') # 提取评论
-    print ('评论：%s\n ---\n'%sweet.text) # 打印评论
-driver.close() # 关闭浏览器 # 关闭浏览器
+	for comment in comments: # 循环
+		sweet = comment.find('p') # 提取评论
+		print ('评论：%s\n ---\n'%sweet.text) # 打印评论
+	driver.close() # 关闭浏览器 # 关闭浏览器
 ---
 
 
