@@ -1575,7 +1575,8 @@ selenium刚好可以获取到渲染完整的网页源代码。
 
 用input()获取邮箱密码，但注意了，这里可不是你平时登录邮箱的密码！
 
-这个密码需要我们去到这里获取：请打开https://mail.qq.com/，登录你的邮箱。然后点击位于顶部的【设置】按钮，选择【账户设置】，然后下拉到这个位置。
+这个密码需要我们去到这里获取：请打开https://mail.qq.com/，
+登录你的邮箱。然后点击位于顶部的【设置】按钮，选择【账户设置】，然后下拉到这个位置。
 
 ![](crawlernote_files/62.jpg)
 
@@ -1764,6 +1765,199 @@ selenium刚好可以获取到渲染完整的网页源代码。
 		schedule.run_pending()
 		time.sleep(1)
 ---
+
+
+# 协程
+
+## 异步与同步
+- 一个爬虫爬取大量数据要爬很久，那我们让多个爬虫一起爬取
+在一个任务未完成时，就可以执行其他多个任务，彼此不受影响（在看第一部下载好的电影时，其他电影继续保持下载状态，彼此之间不受影响），叫异步。
+同步就是一个任务结束才能启动下一个。
+显然，异步执行任务会比同步更加节省时间，因为它能减少不必要的等待。如果你需要对时间做优化，异步是一个很值得考虑的方案。
+
+![](crawlernote_files/50.jpg)
+
+![](crawlernote_files/65.jpg)
+
+爬虫每发起一个请求，都要等服务器返回响应后，才会执行下一步。而很多时候，由于网络不稳定，加上服务器自身也需要响应的时间，导致爬虫会浪费大量时间在等待上。这也是爬取大量数据时，爬虫的速度会比较慢的原因。
+
+
+## 多协程
+我们知道每台计算机都靠着CPU（中央处理器）干活。在过去，单核CPU的计算机在处理多任务时，会出现一个问题：每个任务都要抢占CPU，执行完了一个任务才开启下一个任务。CPU毕竟只有一个，这会让计算机处理的效率很低。
+
+![](crawlernote_files/66.jpg)
+
+为了解决这样的问题，一种非抢占式的异步技术被创造了出来，这种方式叫多协程（在此，多是多个的意思）。
+
+它的原理是：一个任务在执行过程中，如果遇到等待，就先去执行其他的任务，当等待结束，再回来继续之前的那个任务。在计算机的世界，这种任务来回切换得非常快速，看上去就像多个任务在被同时执行一样。
+
+## 多协程的用法
+
+### gevent库
+
+- 示例
+---
+	from gevent import monkey
+	从gevent库里导入monkey模块。
+	monkey.patch_all()
+	monkey.patch_all()
+	能把程序变成协作式运行，就是可以帮助程序实现异步。
+	import gevent,time,requests
+	导入gevent、time、requests。
+
+	start = time.time()
+	记录程序开始时间。
+
+	url_list = ['https://www.baidu.com/',
+	'https://www.sina.com.cn/',
+	'http://www.sohu.com/',
+	'https://www.qq.com/',
+	'https://www.163.com/',
+	'http://www.iqiyi.com/',
+	'https://www.tmall.com/',
+	'http://www.ifeng.com/']
+	把8个网站封装成列表。
+
+	def crawler(url):
+	定义一个crawler()函数。
+		r = requests.get(url)
+		用requests.get()函数爬取网站。
+		print(url,time.time()-start,r.status_code)
+		打印网址、请求运行时间、状态码。
+
+	tasks_list = [ ]
+	创建空的任务列表。
+
+	for url in url_list:
+	遍历url_list。
+		task = gevent.spawn(crawler,url)
+		#用gevent.spawn()函数创建任务。
+		tasks_list.append(task)
+		#往任务列表添加任务。
+	gevent.joinall(tasks_list)
+	执行任务列表里的所有任务，就是让爬虫开始爬取网站。
+	end = time.time()
+	记录程序结束时间。
+	print(end-start)
+	打印程序最终所需时间。
+---
+
+爬虫用了异步的方式抓取了8个网站，因为每个请求完成的时间并不是按着顺序来的。比如在我测试运行这个代码的时候，最先爬取到的网站是搜狐，接着是凤凰，并不是百度和新浪。
+且每个请求完成时间之间的间隔都非常短，你可以看作这些请求几乎是“同时”发起的。
+通过对比同步和异步爬取最终所花的时间，用多协程异步的爬取方式，确实比同步的爬虫方式速度更快。
+
+![](crawlernote_files/67.jpg)
+
+第33行代码：因为gevent只能处理gevent的任务对象，不能直接调用普通函数，所以需要借助gevent.spawn()来创建任务对象。
+
+这里需要注意一点：gevent.spawn()的参数需为要调用的函数名及该函数的参数。比如，gevent.spawn(crawler,url)就是创建一个执行crawler函数的任务，参数为crawler函数名和它自身的参数url。
+
+- 用gevent实现多协程爬取的重点：
+![](crawlernote_files/68.jpg)
+
+### queue模块
+当我们用多协程来爬虫，需要创建大量任务时，我们可以借助queue模块。
+
+queue翻译成中文是队列的意思。我们可以用queue模块来存储任务，让任务都变成一条整齐的队列，就像银行窗口的排号做法。因为queue其实是一种有序的数据结构，可以用来存取数据。
+
+这样，协程就可以从队列里把任务提取出来执行，直到队列空了，任务也就处理完了。就像银行窗口的工作人员会根据排号系统里的排号，处理客人的业务，如果已经没有新的排号，就意味着客户的业务都已办理完毕。
+
+![](crawlernote_files/69.jpg)
+
+---
+	第1部分是导入模块
+	from gevent import monkey
+	从gevent库里导入monkey模块。
+	monkey.patch_all()
+	monkey.patch_all()能把程序变成协作式运行，就是可以帮助程序实现异步。
+	import gevent,time,requests
+	导入gevent、time、requests
+	from gevent.queue import Queue
+	从gevent库里导入queue模块
+
+	第2部分，是如何创建队列，以及怎么把任务存储进队列里
+	start = time.time()
+	记录程序开始时间
+	url_list = ['https://www.baidu.com/',
+	'https://www.sina.com.cn/',
+	'http://www.sohu.com/',
+	'https://www.qq.com/',
+	'https://www.163.com/',
+	'http://www.iqiyi.com/',
+	'https://www.tmall.com/',
+	'http://www.ifeng.com/']
+	
+	work = Queue()
+	创建队列对象，并赋值给work。
+	for url in url_list:
+	遍历url_list
+		work.put_nowait(url)
+		#用put_nowait()函数可以把网址都放进队列里。
+
+	第3部分，是定义爬取函数，和如何从队列里提取出刚刚存储进去的网址。
+	def crawler():
+		while not work.empty():
+		当队列不是空的时候，就执行下面的程序。
+			url = work.get_nowait()
+			用get_nowait()函数可以把队列里的网址都取出。
+			r = requests.get(url)
+			用requests.get()函数抓取网址。
+			print(url,work.qsize(),r.status_code)
+			打印网址、队列长度、抓取请求的状态码。
+---
+
+![](crawlernote_files/70.jpg)
+
+
+- queue模块的重点内容
+![](crawlernote_files/71.jpg)
+
+- 接在第3部分代码的后面，就是让爬虫用多协程执行任务，爬取队列里的8个网站的代码
+---
+	def crawler():
+		while not work.empty():
+			url = work.get_nowait()
+			r = requests.get(url)
+			print(url,work.qsize(),r.status_code)
+
+	tasks_list  = [ ]
+	创建空的任务列表
+	for x in range(2):
+	相当于创建了2个爬虫
+		task = gevent.spawn(crawler)
+		#用gevent.spawn()函数创建执行crawler()函数的任务。
+		tasks_list.append(task)
+		#往任务列表添加任务。
+	gevent.joinall(tasks_list)
+	用gevent.joinall方法，执行任务列表里的所有任务，就是让爬虫开始爬取网站。
+	end = time.time()
+	print(end-start)
+---
+
+![](crawlernote_files/72.jpg)
+
+我们创建了两只可以异步爬取的爬虫。它们会从队列里取走网址，执行爬取任务。一旦一个网址被一只爬虫取走，另一只爬虫就取不到了，另一只爬虫就会取走下一个网址。直至所有网址都被取走，队列为空时，爬虫就停止工作。
+
+## 拓展复习
+
+### 并行与并发执行
+继续说我们的计算机历史小知识：在后来，我们的CPU从单核终于进化到了多核，每个核都能够独立运作。计算机开始能够真正意义上同时执行多个任务（术语叫并行执行），而不是在多个任务之间来回切换（术语叫并发执行）。
+
+比如你现在打开浏览器看着爬虫课程的同时，可以打开音乐播放器听歌，还可以打开Excel。对于多核CPU而言，这些任务就都是同时运行的。
+
+### 多进程
+时至今日，我们电脑一般都会是多核CPU。多协程，其实只占用了CPU的一个核运行，没有充分利用到其他核。利用CPU的多个核同时执行任务的技术，我们把它叫做“多进程”。
+
+所以，真正大型的爬虫程序不会单单只靠多协程来提升爬取速度的。比如，百度搜索引擎，可以说是超大型的爬虫程序，它除了靠多协程，一定还会靠多进程，甚至是分布式爬虫。
+
+
+
+
+
+
+
+
+
 
 
 
