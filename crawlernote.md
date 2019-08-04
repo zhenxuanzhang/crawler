@@ -1950,6 +1950,737 @@ queue翻译成中文是队列的意思。我们可以用queue模块来存储任�
 
 所以，真正大型的爬虫程序不会单单只靠多协程来提升爬取速度的。比如，百度搜索引擎，可以说是超大型的爬虫程序，它除了靠多协程，一定还会靠多进程，甚至是分布式爬虫。
 
+# 用多协程爬取薄荷网的食物热量
+
+![](crawlernote_files/73.jpg)
+
+![](crawlernote_files/74.jpg)
+
+
+---
+	from gevent import monkey
+	monkey.patch_all()
+	import gevent,requests, bs4, csv
+	from gevent.queue import Queue
+
+	work = Queue()
+	url_1 = 'http://www.boohee.com/food/group/{type}?page={page}'
+	for x in range(1, 4):
+		for y in range(1, 4):
+			real_url = url_1.format(type=x, page=y)
+			work.put_nowait(real_url)
+
+	url_2 = 'http://www.boohee.com/food/view_menu?page={page}'
+	for x in range(1,4):
+		real_url = url_2.format(page=x)
+		work.put_nowait(real_url)
+
+	def crawler():
+		headers = {
+		'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36'
+		}
+		while not work.empty():
+			url = work.get_nowait()
+			res = requests.get(url, headers=headers)
+			bs_res = bs4.BeautifulSoup(res.text, 'html.parser')
+			foods = bs_res.find_all('li', class_='item clearfix')
+			for food in foods:
+				food_name = food.find_all('a')[1]['title']
+				food_url = 'http://www.boohee.com' + food.find_all('a')[1]['href']
+				food_calorie = food.find('p').text
+				writer.writerow([food_name, food_calorie, food_url])
+				借助writerow()函数，把提取到的数据：食物名称、食物热量、食物详情链接，写入csv文件。
+				print(food_name)
+
+	csv_file= open('boohee.csv', 'w', newline='')
+	调用open()函数打开csv文件，传入参数：文件名“boohee.csv”、写入模式“w”、newline=''。
+	writer = csv.writer(csv_file)
+	 用csv.writer()函数创建一个writer对象。
+	writer.writerow(['食物', '热量', '链接'])
+	借助writerow()函数往csv文件里写入文字：食物、热量、链接
+
+	tasks_list = []
+	for x in range(5):
+		task = gevent.spawn(crawler)
+		tasks_list.append(task)
+	gevent.joinall(tasks_list)
+
+---
+
+# Scrapy
+以前我们写爬虫，要导入和操作不同的模块，比如requests模块、gevent库、csv模块等。而在Scrapy里，你不需要这么做，因为很多爬虫需要涉及的功能，比如麻烦的异步，在Scrapy框架都自动实现了。
+我们之前编写爬虫的方式，相当于在一个个地在拼零件，拼成一辆能跑的车。而Scrapy框架则是已经造好的、现成的车，我们只要踩下它的油门，它就能跑起来。这样便节省了我们开发项目的时间。
+
+## Scrapy的结构
+
+![](crawlernote_files/75.jpg)
+
+![](crawlernote_files/76.jpg)
+
+- 以爬虫流程的顺序来依次跟你介绍Scrapy爬虫公司的4大部门。
+
+Scheduler(调度器)部门主要负责处理引擎发送过来的requests对象（即网页请求的相关信息集合，包括params，data，cookies，request headers…等），会把请求的url以有序的方式排列成队，并等待引擎来提取（功能上类似于gevent库的queue模块）。
+
+Downloader（下载器）部门则是负责处理引擎发送过来的requests，进行网页爬取，并将返回的response（爬取到的内容）交给引擎。它对应的是爬虫流程【获取数据】这一步。
+
+Spiders(爬虫)部门是公司的核心业务部门，主要任务是创建requests对象和接受引擎发送过来的response（Downloader部门爬取到的内容），从中解析并提取出有用的数据。它对应的是爬虫流程【解析数据】和【提取数据】这两步。
+
+Item Pipeline（数据管道）部门则是公司的数据部门，只负责存储和处理Spiders部门提取到的有用数据。这个对应的是爬虫流程【存储数据】这一步。
+
+Downloader Middlewares（下载中间件）的工作相当于下载器部门的秘书，比如会提前对引擎大boss发送的诸多requests做出处理。
+
+Spider Middlewares（爬虫中间件）的工作则相当于爬虫部门的秘书，比如会提前接收并处理引擎大boss发送来的response，过滤掉一些重复无用的东西。
+
+## Scrapy的工作原理
+
+![](crawlernote_files/77.jpg)
+
+在Scrapy里，整个爬虫程序的流程都不需要我们去操心，且Scrapy中的程序全部都是异步模式，所有的请求或返回的响应都由引擎自动分配去处理。
+
+哪怕有某个请求出现异常，程序也会做异常处理，跳过报错的请求，继续往下运行程序。
+
+在一定程度上，Scrapy可以说是非常让人省心的一套爬虫框架。
+
+## Scrapy的用法
+- 使用它来完成一个小项目——爬取豆瓣Top250图书。
+
+### 创建项目
+要在本地电脑打开终端，跳转到你想要保存项目的目录下，再输入一行能帮我们创建Scrapy项目的命令：scrapy startproject douban
+
+- 整个scrapy项目的结构，如下图所示：
+
+![](crawlernote_files/78.jpg)
+
+### 编辑爬虫
+spiders是放置爬虫的目录。我们可以在spiders这个文件夹里创建爬虫文件。我们来把这个文件，命名为top250。后面的大部分代码都需要在这个top250.py文件里编写。
+
+---
+	class DoubanSpider(scrapy.Spider):
+		name = 'douban'
+		allowed_domains = ['book.douban.com']
+		start_urls = ['https://book.douban.com/top250?start=0']
+		
+		def parse(self, response):
+			print(response.text)
+---
+
+第1行代码：定义一个爬虫类DoubanSpider。就像我刚刚讲过的那样，DoubanSpider类继承自scrapy.Spider类。
+
+第2行代码：name是定义爬虫的名字，这个名字是爬虫的唯一标识。name = 'douban'意思是定义爬虫的名字为douban。等会我们启动爬虫的时候，要用到这个名字。
+
+第3行代码：allowed_domains是定义允许爬虫爬取的网址域名（不需要加https://）。如果网址的域名不在这个列表里，就会被过滤掉。
+
+为什么会有这个设置呢？当你在爬取大量数据时，经常是从一个URL开始爬取，然后关联爬取更多的网页。比如，假设我们今天的爬虫目标不是爬书籍信息，而是要爬豆瓣top250，每本书的书评。我们会先爬取书单，再找到每本书的URL，再进入每本书的详情页面去抓取评论。
+
+allowed_domains就限制了，我们这种关联爬取的URL，一定在book.douban.com这个域名之下，不会跳转到某个奇怪的广告页面。
+
+第4行代码：start_urls 是定义起始网址，就是爬虫从哪个网址开始抓取。在此，allowed_domains的设定对start_urls里的网址不会有影响。
+
+
+第6行代码：parse是Scrapy里默认处理response的一个方法，中文是解析。
+
+你或许会好奇，这里是不是少了一句类似requests.get()这样的代码？的确是，在这里，我们并不需要写这一句。scrapy框架会为我们代劳做这件事，写好你的请求
+
+
+![](crawlernote_files/79.jpg)
+
+---
+	import scrapy
+	import bs4
+	from ..items import DoubanItem
+
+	class DoubanSpider(scrapy.Spider):
+	定义一个爬虫类DoubanSpider。
+		name = 'douban'
+		定义爬虫的名字为douban。
+		allowed_domains = ['book.douban.com']
+		定义爬虫爬取网址的域名。
+		start_urls = []
+		定义起始网址。
+		for x in range(3):
+			url = 'https://book.douban.com/top250?start=' + str(x * 25)
+			start_urls.append(url)
+			把豆瓣Top250图书的前3页网址添加进start_urls。
+
+		def parse(self, response):
+		parse是默认处理response的方法。
+			bs = bs4.BeautifulSoup(response.text,'html.parser')
+			用BeautifulSoup解析response。
+			datas = bs.find_all('tr',class_="item")
+			用find_all提取<tr class="item">元素，这个元素里含有书籍信息。
+			for data in  datas:
+			遍历data。
+				title = data.find_all('a')[1]['title']
+				提取出书名。
+				publish = data.find('p',class_='pl').text
+				提取出出版信息。
+				score = data.find('span',class_='rating_nums').text
+				提取出评分。
+				print([title,publish,score])
+				打印上述信息。
+---
+
+### 定义数据
+当我们每一次，要记录数据的时候，比如前面在每一个最小循环里，都要记录“书名”，“出版信息”，“评分”。我们会实例化一个对象，利用这个对象来记录数据。
+
+每一次，当数据完成记录，它会离开spiders，来到Scrapy Engine（引擎），引擎将它送入Item Pipeline（数据管道）处理。
+
+定义这个类的py文件，正是items.py。
+
+---
+	import scrapy
+	导入scrapy
+	class DoubanItem(scrapy.Item):
+	定义一个类DoubanItem，它继承自scrapy.Item
+		title = scrapy.Field()
+		定义书名的数据属性
+		publish = scrapy.Field()
+		定义出版信息的数据属性
+		score = scrapy.Field()
+		定义评分的数据属性
+---
+
+第1行代码，我们导入了scrapy。目的是，我们等会所创建的类将直接继承scrapy中的scrapy.Item类。这样，有许多好用属性和方法，就能够直接使用。比如到后面，引擎能将item类的对象发给Item Pipeline（数据管道）处理。
+
+第3行代码：我们定义了一个DoubanItem类。它继承自scrapy.Item类。
+
+第5、7、9行代码：我们定义了书名、出版信息和评分三种数据。scrapy.Field()这行代码实现的是，让数据能以类似字典的形式记录。
+
+- 重新写top250.py
+---
+	import scrapy
+	导入scrapy
+	class DoubanItem(scrapy.Item):
+	定义一个类DoubanItem，它继承自scrapy.Item
+		title = scrapy.Field()
+		定义书名的数据属性
+		publish = scrapy.Field()
+		定义出版信息的数据属性
+		score = scrapy.Field()
+		定义评分的数据属性
+
+	book = DoubanItem()
+	实例化一个DoubanItem对象
+	book['title'] = '海边的卡夫卡'
+	book['publish'] = '[日] 村上春树 / 林少华 / 上海译文出版社 / 2003'
+	book['score'] = '8.1'
+	print(book)
+	print(type(book))
+---
+	{'publish': '[日] 村上春树 / 林少华 / 上海译文出版社 / 2003',
+	 'score': '8.1',
+	 'title': '海边的卡夫卡'}
+	<class '__main__.DoubanItem'>
+---
+
+打印出来的结果的确和字典非常相像，但它却并不是dict，它的数据类型是我们定义的DoubanItem，属于“自定义的Python字典”
+
+---
+	import scrapy
+	import bs4
+	from ..items import DoubanItem
+	#需要引用DoubanItem，它在items里面。因为是items在top250.py的上一级目录，所以要用..items，这是一个固定用法。
+
+	class DoubanSpider(scrapy.Spider):
+	定义一个爬虫类DoubanSpider。
+		name = 'douban'
+		定义爬虫的名字为douban。
+		allowed_domains = ['book.douban.com']
+		#定义爬虫爬取网址的域名。
+		start_urls = []
+		#定义起始网址。
+		for x in range(3):
+			url = 'https://book.douban.com/top250?start=' + str(x * 25)
+			start_urls.append(url)
+			#把豆瓣Top250图书的前3页网址添加进start_urls。
+
+		def parse(self, response):
+		#parse是默认处理response的方法。
+			bs = bs4.BeautifulSoup(response.text,'html.parser')
+			#用BeautifulSoup解析response。
+			datas = bs.find_all('tr',class_="item")
+			#用find_all提取<tr class="item">元素，这个元素里含有书籍信息。
+			for data in  datas:
+			#遍历data。
+				item = DoubanItem()
+				#实例化DoubanItem这个类。
+				item['title'] = data.find_all('a')[1]['title']
+				#提取出书名，并把这个数据放回DoubanItem类的title属性里。
+				item['publish'] = data.find('p',class_='pl').text
+				#提取出出版信息，并把这个数据放回DoubanItem类的publish里。
+				item['score'] = data.find('span',class_='rating_nums').text
+				#提取出评分，并把这个数据放回DoubanItem类的score属性里。
+				print(item['title'])
+				#打印书名。
+				yield item
+				#yield item是把获得的item传递给引擎。
+---
+
+
+在3行，我们需要引用DoubanItem，它在items里面。因为是items在top250.py的上一级目录，所以要用..items，这是一个固定用法。
+
+当我们每一次，要记录数据的时候，比如前面在每一个最小循环里，都要记录“书名”，“出版信息”，“评分”。我们会实例化一个item对象，利用这个对象来记录数据。
+
+每一次，当数据完成记录，它会离开spiders，来到Scrapy Engine（引擎），引擎将它送入Item Pipeline（数据管道）处理。这里，要用到yield语句。
+
+yield语句你可能还不太了解，这里你可以简单理解为：它有点类似return，不过它和return不同的点在于，它不会结束函数，且能多次返回信息。
+
+
+### 设置
+
+- 点击settings.py文件
+---
+	#Crawl responsibly by identifying yourself (and your website) on the user-agent
+	#USER_AGENT = 'douban (+http://www.yourdomain.com)'
+
+	#Obey robots.txt rules
+	ROBOTSTXT_OBEY = True
+---
+把USER _AGENT的注释取消（删除#），然后替换掉user-agent的内容，就是修改了请求头
+因为Scrapy是遵守robots协议的，如果是robots协议禁止爬取的内容，Scrapy也会默认不去爬取，所以我们还得修改Scrapy中的默认设置。
+
+把ROBOTSTXT_OBEY=True改成ROBOTSTXT_OBEY=False，就是把遵守robots协议换成无需遵从robots协议，这样Scrapy就能不受限制地运行。
+
+- 修改后的代码应该如下所示：
+---
+	#Crawl responsibly by identifying yourself (and your website) on the user-agent
+	USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'
+
+	#Obey robots.txt rules
+	ROBOTSTXT_OBEY = False
+---
+
+### 运行
+运行Scrapy有两种方法，一种是在本地电脑的终端跳转到scrapy项目的文件夹（跳转方法：cd+文件夹的路径名），然后输入命令行：scrapy crawl douban（douban 就是我们爬虫的名字）。
+
+另一种运行方式需要我们在最外层的大文件夹里新建一个main.py文件（与scrapy.cfg同级）
+
+![](crawlernote_files/80.jpg)
+
+- main.py文件里，输入以下代码，点击运行，Scrapy的程序就会启动
+
+---
+	from scrapy import cmdline
+	#导入cmdline模块,可以实现控制终端命令行。
+	cmdline.execute(['scrapy','crawl','douban'])
+	#用execute（）方法，输入运行scrapy的命令。
+---
+
+第1行代码：在Scrapy中有一个可以控制终端命令的模块cmdline。导入了这个模块，我们就能操控终端。
+
+第3行代码：在cmdline模块中，有一个execute方法能执行终端的命令行，不过这个方法需要传入列表的参数。我们想输入运行Scrapy的代码scrapy crawl douban，就需要写成['scrapy','crawl','douban']这样。
+
+### 复习流程
+
+![](crawlernote_files/81.jpg)
+
+
+# 用Scrapy爬取招聘网站的招聘信息
+
+- [职友集](https://www.jobui.com/rank/company/)
+
+![](crawlernote_files/82.jpg)
+
+	只要把<a>元素的href属性的值提取出来，就能构造出每家公司详情页面的网址。
+
+![](crawlernote_files/83.jpg)
+
+![](crawlernote_files/84.jpg)
+
+## 代码实现
+
+![](crawlernote_files/85.jpg)
+
+### 定义item
+
+---
+import scrapy
+
+class JobuiItem(scrapy.Item):
+#定义了一个继承自scrapy.Item的JobuiItem类
+    company = scrapy.Field()
+    #定义公司名称的数据属性
+    position = scrapy.Field()
+    #定义职位名称的数据属性
+    address = scrapy.Field()
+    #定义工作地点的数据属性
+    detail = scrapy.Field()
+    #定义招聘要求的数据属性
+---
+
+### 创建和编写爬虫文件
+
+![](crawlernote_files/86.jpg)
+
+---
+#导入模块：
+import scrapy
+import bs4
+from ..items import JobuiItem
+
+class JobuiSpider(scrapy.Spider):
+    name = 'jobs'
+    allowed_domains = ['www.jobui.com']
+    start_urls = ['https://www.jobui.com/rank/company/']
+    
+#提取公司id标识和构造公司招聘信息的网址：
+    def parse(self, response):
+    #parse是默认处理response的方法
+        bs = bs4.BeautifulSoup(response.text, 'html.parser')
+        ul_list = bs.find_all('ul',class_="textList flsty cfix")
+        for ul in ul_list:
+            a_list = ul.find_all('a')
+            for a in a_list:
+                company_id = a['href']
+                url = 'https://www.jobui.com{id}jobs'
+                real_url = url.format(id=company_id)
+                yield scrapy.Request(real_url, callback=self.parse_job)
+	#用yield语句把构造好的request对象传递给引擎。用scrapy.Request构造request对象。callback参数设置调用parsejob方法。
+
+    def parse_job(self, response):
+    #定义新的处理response的方法parse_job（方法的名字可以自己起）
+        bs = bs4.BeautifulSoup(response.text, 'html.parser')
+        #用BeautifulSoup解析response(公司招聘信息的网页源代码)
+        company = bs.find(id="companyH1").text
+        #用fin方法提取出公司名称
+        datas = bs.find_all('li',class_="company-job-list")
+        #用find_all提取<li class_="company-job-list">标签，里面含有招聘信息的数据
+        for data in datas:
+        #遍历datas
+            item = JobuiItem()
+            #实例化JobuiItem这个类
+            item['company'] = company
+            #把公司名称放回JobuiItem类的company属性里
+            item['position']=data.find('h3').find('a').text
+            #提取出职位名称，并把这个数据放回JobuiItem类的position属性里
+            item['address'] = data.find('span',class_="col80").text
+            #提取出工作地点，并把这个数据放回JobuiItem类的address属性里
+            item['detail'] = data.find('span',class_="col150").text
+            #提取出招聘要求，并把这个数据放回JobuiItem类的detail属性里
+            yield item
+            #用yield语句把item传递给引擎
+---
+
+yield scrapy.Request(real_url, callback=self.parse_job)的意思：
+scrapy.Request是构造requests对象的类。real_url是我们往requests对象里传入的每家公司招聘信息网址的参数。
+
+callback的中文意思是回调。self.parse_job是我们新定义的parse_job方法。往requests对象里传入callback=self.parse_job这个参数后，引擎就能知道response要前往的下一站，是parse_job()方法。
+
+yield语句就是用来把这个构造好的requests对象传递给引擎。
+
+### 存储文件
+
+- 在Scrapy里，把数据存储成csv文件和Excel文件，也有分别对应的方法
+
+#### csv
+存储成csv文件的方法比较简单，只需在settings.py文件里，添加如下的代码即可
+
+
+	FEED_URI='./storage/data/%(name)s.csv'
+	FEED_FORMAT='CSV'
+	FEED_EXPORT_ENCODING='ansi'
+
+FEED_URI是导出文件的路径。'./storage/data/%(name)s.csv'，就是把存储的文件放到与settings.py文件同级的storage文件夹的data子文件夹里。
+
+FEED_FORMAT 是导出数据格式，写CSV就能得到CSV格式。
+
+FEED_EXPORT_ENCODING 是导出文件编码，ansi是一种在windows上的编码格式，也可以把它变成utf-8用在mac电脑上
+
+#### Excel
+
+需要先在setting.py里设置启用ITEM_PIPELINES，设置方法如下：
+
+---
+	#需要修改`ITEM_PIPELINES`的设置代码：
+
+	#Configure item pipelines
+	#See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
+	#ITEM_PIPELINES = {
+	#'jobuitest.pipelines.JobuitestPipeline': 300,
+	#}
+---
+只要取消ITEM_PIPELINES的注释（删掉#）即可。
+
+	#取消`ITEM_PIPELINES`的注释后：
+
+	#Configure item pipelines
+	#See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
+	ITEM_PIPELINES = {
+		 'jobuitest.pipelines.JobuitestPipeline': 300,}
+	
+---
+
+接着，我们就可以去编辑pipelines.py文件。存储为Excel文件，我们依旧是用openpyxl模块来实现，代码如下
+
+---
+import openpyxl
+
+class JobuiPipeline(object):
+#定义一个JobuiPipeline类，负责处理item
+    def __init__(self):
+    #初始化函数 当类实例化时这个方法会自启动
+        self.wb =openpyxl.Workbook()
+        #创建工作薄
+        self.ws = self.wb.active
+        #定位活动表
+        self.ws.append(['公司', '职位', '地址', '招聘信息'])
+        #用append函数往表格添加表头
+        
+    def process_item(self, item, spider):
+    #process_item是默认的处理item的方法，就像parse是默认处理response的方法
+        line = [item['company'], item['position'], item['address'], item['detail']]
+        #把公司名称、职位名称、工作地点和招聘要求都写成列表的形式，赋值给line
+        self.ws.append(line)
+        #用append函数把公司名称、职位名称、工作地点和招聘要求的数据都添加进表格
+        return item
+        #将item丢回给引擎，如果后面还有这个item需要经过的itempipeline，引擎会自己调度
+
+    def close_spider(self, spider):
+    #close_spider是当爬虫结束运行时，这个方法就会执行
+        self.wb.save('./jobui.xlsx')
+        #保存文件
+        self.wb.close()
+        #关闭文件
+---
+
+### 修改设置
+
+在最后，我们还要再修改Scrapy中settings.py文件里的默认设置：添加请求头，以及把ROBOTSTXT_OBEY=True改成ROBOTSTXT_OBEY=False。
+
+
+	#Configure a delay for requests for the same website (default: 0)
+	#See https://doc.scrapy.org/en/latest/topics/settings.html#download-delay
+	#See also autothrottle settings and docs
+	#DOWNLOAD_DELAY = 0
+
+
+需要取消DOWNLOAD_DELAY = 0这行的注释（删掉#）。DOWNLOAD_DELAY翻译成中文是下载延迟的意思，这行代码可以控制爬虫的速度。因为这个项目的爬取速度不宜过快，我们要把下载延迟的时间改成0.5秒。
+
+
+修改完设置，我们已经可以运行代码
+
+![](crawlernote_files/87.jpg)
+
+# 爬虫总复习
+
+## 工具
+
+Network能够记录浏览器的所有请求。我们最常用的是：ALL（查看全部）/XHR（仅查看XHR）/Doc（Document，第0个请求一般在这里），有时候也会看看：Img（仅查看图片）/Media（仅查看媒体文件）/Other（其他）。最后，JS和CSS，则是前端代码，负责发起请求和页面实现；Font是文字的字体；而理解WS和Manifest，需要网络编程的知识
+
+![](crawlernote_files/88.jpg)
+
+数据究竟是藏身何处
+
+![](crawlernote_files/89.jpg)
+
+## 解析与提取（一）
+当数据藏匿于网页源代码，我们自有一条完整的“爬虫四步”链，在这里，最重要的库叫BeautifulSoup，它能提供一套完整的数据解析、数据提取解决方案。用法如下：
+
+![](crawlernote_files/90.jpg)
+
+## 解析与提取（二）
+
+来看事情的另一端——当数据在XHR中现身。
+
+XHR所传输的数据，最重要的一种是用json格式写成的，和html一样，这种数据能够有组织地存储大量内容。json的数据类型是“文本”，在Python语言当中，我们把它称为字符串。我们能够非常轻易地将json格式的数据转化为列表/字典，也能将字典/列表转为json格式的数据。
+
+![](crawlernote_files/91.jpg)
+
+![](crawlernote_files/92.jpg)
+
+## 更厉害的请求
+一开始，你的requests.get()里面其实只有一个参数，即url。
+但其实，这个请求可以有多个参数。
+
+params，可以让我们带着参数来请求数据：我想要第几页？我想要搜索的关键词？我想要多少个数据？
+
+headers，请求头。它告诉服务器，我的设备/浏览器是什么？我从哪个页面而来？
+
+再往后，你发现除了get请求之外，还存在着另一种请求方式——post。post区别于get的是：get是明文显示参数，post是非明文显示参数。学会post，你又有两个参数可用：
+
+在post请求里，我们使用data来传递参数，其用法和params非常相像。
+
+cookies，中文名很好听是“小饼干”。但它却和“小饼干”并无关联。它的作用是让服务器“记住你”，比如一般当你登录一个网站，你都会在登录页面看到一个可勾选的选项“记住我”。如果你点了勾选，服务器就会生成一个cookies和你的账号绑定。接着，它把这个cookies告诉你的浏览器，让浏览器把cookies存储到你的本地电脑。当下一次，浏览器带着cookies访问博客，服务器会知道你是何人，你不需要再重复输入账号密码，就能直接访问。
+
+
+## 存储
+存储数据的方法有许多，其中最常见的是：csv和excel
+
+![](crawlernote_files/93.jpg)
+
+![](crawlernote_files/94.jpg)
+
+---
+![](crawlernote_files/95.jpg)
+
+![](crawlernote_files/96.jpg)
+
+
+## 更多的爬虫
+
+如果要爬取的数据特别特别多，以至于程序会被拖得很慢怎么办？用协程。
+
+同步与异步——
+![](crawlernote_files/97.jpg)
+
+多协程，是一种非抢占式的异步方式。使用多协程的话，就能让多个爬取任务用异步的方式交替执行。
+
+![](crawlernote_files/98.jpg)
+![](crawlernote_files/99.jpg)
+![](crawlernote_files/100.jpg)
+![](crawlernote_files/101.jpg)
+![](crawlernote_files/102.jpg)
+
+## 更强大的爬虫——框架
+当你爬虫代码越写越多，一个一站式解决所有爬虫问题的框架，就对你越来越有吸引力
+
+Scrapy出现在你眼前。Scrapy的结构——
+![](crawlernote_files/103.jpg)
+
+Scrapy的工作原理——
+![](crawlernote_files/104.jpg)
+
+Scrapy的用法——
+![](crawlernote_files/105.jpg)
+
+## 给爬虫加上翅膀
+我们还穿插学习了三个有力工具：selenium，邮件通知和定时
+
+- selenium，我们学习了可视模式与静默模式这两种浏览器的设置方法，二者各有优势。
+
+然后学习了使用.get('URL')获取数据，以及解析与提取数据的方法。
+
+![](crawlernote_files/106.jpg)
+
+![](crawlernote_files/107.jpg)
+
+除了上面的方法，还可以搭配BeautifulSoup解析提取数据，前提是先获取字符串格式的网页源代码
+
+HTML源代码字符串 = driver.page_source
+
+自动操作浏览器的一些方法
+
+![](crawlernote_files/108.jpg)
+
+- 关于邮件，它是这样一种流程：
+![](crawlernote_files/109.jpg)
+
+用到的模块是smtplib和email，前者负责连接服务器、登录、发送和退出的流程。后者负责填输邮件的标题与正文
+
+- 再说定时，我们选取了schedule模块
+
+![](crawlernote_files/110.jpg)
+
+
+
+
+# 爬虫进阶路线指引
+
+## 解析与提取
+学习解析和提取，是指学习解析库。除了我们关卡里所用的BeautifulSoup解析、Selenium的自带解析库之外，还会有：xpath/lxml等。它们可能语法有所不同，但底层原理都一致
+
+如果说上述解析库，学或不学都影响不大，那么我要隆重地推荐你去学习正则表达式（re模块）。正则表达式功能强大，它能让你自己设定一套复杂的规则，然后把目标文本里符合条件的相关内容给找出来
+
+
+## 存储
+目前已经掌握的知识是csv和excel。它们并不是非常高难度的模块，我会推荐你翻阅它们的官方文档，了解更多的用法。这样，对于平时的自动化办公也会有所帮助
+
+但是当数据量变得十分巨大（这在爬虫界并不是什么新鲜事），同时数据与数据之间的关系，应难以用一张简单的二维平面表格来承载。那么，你需要数据库的帮助。
+
+我推荐你从MySQL和MongoDB这两个库开始学起，它们一个是关系型数据库的典型代表，一个是非关系型数据库的典型代表。
+
+学习数据库，需要你接触另一种语言：SQL
+
+## 数据分析与可视化
+
+将数据分析的结论，直观、有力地传递出来，是可视化
+
+如果你希望自己学习它，这是我推荐的模块与库：Pandas/Matplotlib/Numpy/Scikit-Learn/Scipy
+
+## 更多的爬虫
+我们介绍了一个可以让多个爬虫一起工作的工具——协程。
+严格来说这并不是同时工作，而是电脑在多个任务之间快速地来回切换，看上去就仿佛是爬虫们同时工作。
+
+所以这种工作方式对速度的优化有瓶颈
+
+我们已经知道，协程在本质上只用到CPU的一个核。而多进程（multiprocessing库）爬虫允许你使用CPU的多个核，所以你可以使用多进程，或者是多进程与多协程结合的方式进一步优化爬虫。
+理论上来说，只要CPU允许，开多少个进程，就能让你的爬虫速度提高多少倍。
+那要是CPU不允许呢？比如我的电脑，也就8核。而我想突破8个进程，应该怎么办？
+
+答，分布式爬虫。什么意思呢？分布式爬虫，就是让多个设备，去跑同一个项目
+
+我们去创建一个共享的队列，队列里塞满了待执行的爬虫任务。让多个设备从这个共享队列当中，去获取任务，并完成执行。这就是分布式爬虫。
+
+
+## 更强大的爬虫——框架
+我们已经简单地学过Scrapy框架的基本原理和用法。而一些更深入的用法：使用Scrapy模拟登录、存储数据库、使用HTTP代理、分布式爬虫……这些就还不曾涉及。
+
+我会推荐你先去更深入地学习、了解Scrapy框架。然后再了解一些其他的优秀框架，如：PySpider。
+
+
+## 项目训练
+
+![](crawlernote_files/111.jpg)
+
+上述的模块/库/框架并不是那样重要，因为它们都是易于掌握的工具。对于一个爬虫工程师来说最重要的，是达成目标的思维。
+
+相信你已经能感受到，在我们所有的项目型关卡里，都遵循着这三个核心步骤：确认目标、分析过程和代码实现（对于复杂项目，也要去做代码封装）。
+
+其中，难度最大的不是代码实现，也不是代码封装，而是：确认一个合理的目标，分析这个目标如何实现，设计这些工具模块如何组合应用。
+
+我们所学习的爬虫四步：获取数据、解析数据、提取数据和存储数据，都服务于“分析过程”这一步。
+
+我要的数据在哪？怎么拿到数据？怎么更快地拿到数据？怎么更好地存储数据……这个，都属于“达成目标的思维”。
+
+获取这种思维，需要大量的项目实操练习。
+
+所以我想推荐你：完成我所提供的所有项目练习；多读一读，编程前辈们的博客、github主页学习案例；同时，探索更多的项目实操，丰富自己的爬虫经验。
+
+## 反爬虫应对策略汇总
+
+几乎所有的技术人员对反爬虫都有一个共识：所谓的反爬虫，从不是将爬虫完全杜绝；而是想办法将爬虫的访问量限制在一个可接纳的范围，不要让它过于肆无忌惮。
+
+原因很简单：爬虫代码写到最后，已经和真人访问网络毫无区别。服务器的那一端完全无法判断是人还是爬虫。如果想要完全禁止爬虫，正常用户也会无法访问。所以只能想办法进行限制，而非禁止。
+
+所以，我们可以了解有哪些“反爬虫”技巧，再思考如何应对“反爬虫”。
+
+有的网站会限制请求头，即Request Headers，那我们就去填写user-agent声明自己的身份，有时还要去填写origin和referer声明请求的来源。
+
+有的网站会限制登录，不登录就不给你访问。那我们就用cookies和session的知识去模拟登录。
+
+有的网站会做一些复杂的交互，比如设置“验证码”来阻拦登录。这就比较难做，解决方案一般有二：我们用Selenium去手动输入验证码；我们用一些图像处理的库自动识别验证码（tesserocr/pytesserart/pillow）。
+
+
+有的网站会做IP限制，什么意思呢？我们平时上网，都会有携带一个IP地址。IP地址就好像电话号码（地址码）：有了某人的电话号码，你就能与他通话了。同样，有了某个设备的IP地址，你就能与这个设备通信。
+
+**使用搜索引擎搜索“IP”，你也能看到自己的IP地址**
+
+如果这个IP地址，爬取网站频次太高，那么服务器就会暂时封掉来自这个IP地址的请求。
+
+解决方案有二：使用time.sleep()来对爬虫的速度进行限制；建立IP代理池（你可以在网络上搜索可用的IP代理），一个IP不能用了就换一个用。大致语法是这样：
+
+	import requests
+	url = 'https://…'
+	proxies = {'http':'http://…'}
+	#ip地址
+	response = requests.get(url,proxies=proxies)
+
+所谓的反爬虫，从不是将爬虫完全杜绝；而是想办法将爬虫的访问量限制在一个可接纳的范围，不要让它过于肆无忌惮。
+
+
+# 逢山开路与不甘庸碌
+在“爬虫”这里，有什么是与众不同的？写爬虫时候，最重要的是什么？
+
+**确认目标-分析过程-先面向过程一行行实现代码-代码封装。**
+
+
+在这，最重要的是确认目标，最难的是分析过程。写代码，不过是水到渠成的事。
+
+人类最有效地解决问题方式，是“目标-手段分析法”。
+
+确认目标，一层一层地分解，大问题变一组小问题，每一个小问题都有实现的手段，然后去做就好。事情仿佛就是这样简单
+
+
 
 
 
